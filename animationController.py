@@ -54,9 +54,6 @@ class LightAnimation:
         # start timers of the selected animations
         self.prepareAnimations()
 
-        # define helper for calculation time tracking
-        currentTime = lambda: int(round(time.time() * 1000))
-
         # run light animations
         try:
             while True:

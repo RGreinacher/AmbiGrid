@@ -44,8 +44,8 @@ class RandomGlowAnimation:
                 self.device.setRgbColorToBufferForLedWithIndex(r, g, b, glowingPixel['index'])
 
     def getColorForIteration(self, xAxisPosition, speedFactor):
-        newLightness = math.sin(xAxisPosition / speedFactor) * self.glowingPixelAmplitude + self.glowingPixelBasisLightness
         newHue = math.sin(xAxisPosition / speedFactor) * ((self.glowingPixelDegreeOfColorDivergence / 360) / 2)
+        newLightness = math.sin(xAxisPosition / speedFactor) * self.glowingPixelAmplitude + self.glowingPixelBasisLightness
         return (newHue, newLightness)
 
     def initializeRandomPixel(self):

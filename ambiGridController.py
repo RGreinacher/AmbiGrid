@@ -18,6 +18,7 @@ DEVICE_FILE = '/dev/tty.usbmodem14211'
 # DEVICE_FILE = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_741333535373514081C0-if00'
 DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 25
+NUMBER_LED_ROWS = 5
 TARGET_FPS = 90
 # DRY_RUN = True
 DRY_RUN = False
@@ -112,18 +113,26 @@ class DeviceController:
 
         return (redChannel, greenChannel, blueChannel)
 
+    def getRgbFromBufferWithCoordinates(self, xIndex, yIndex):
+        return self.getRgbFromBufferWithIndex(xIndex + (yIndex * NUMBER_LED_ROWS))
+
     def setRgbColorToBufferForLedWithIndex(self, redChannel, greenChannel, blueChannel, ledIndex):
         ledAddress = 6 + (ledIndex * 3)
         self.buffer[ledAddress] = self.colorCalculator.frameRgbValue(redChannel)
         self.buffer[ledAddress + 1] = self.colorCalculator.frameRgbValue(greenChannel)
         self.buffer[ledAddress + 2] = self.colorCalculator.frameRgbValue(blueChannel)
 
+    def setRgbColorToBufferForLedWithCoordinates(self, redChannel, greenChannel, blueChannel, xIndex, yIndex):
+        alignedIndex = xIndex + (yIndex * NUMBER_LED_ROWS)
+        index = self.convertAlignedIndexToWiredIndex(alignedIndex) # correct wiring
+        self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, index)
+
     def setHexColorToBufferForLedWithIndex(self, hexColor, ledIndex):
         (redChannel, greenChannel, blueChannel) = self.colorCalculator.convertHexColorToRgb(hexColor)
         self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, ledIndex)
 
     def setHexColorToBufferForLedWithCoordinates(self, hexColor, xIndex, yIndex):
-        alignedIndex = xIndex + (yIndex * 5)
+        alignedIndex = xIndex + (yIndex * NUMBER_LED_ROWS)
         index = self.convertAlignedIndexToWiredIndex(alignedIndex) # correct wiring
         self.setHexColorToBufferForLedWithIndex(hexColor, index)
 
@@ -150,9 +159,9 @@ class DeviceController:
                 # auto correct sleep time to reach target FPS
                 calculatedSleepTime = (1 / TARGET_FPS) - (calculationTimeForFrame / 1000000)
                 if self.asyncUpdateRateController.currentFramesPerSecond < TARGET_FPS:
-                    self.writeBufferSleepOffset = self.writeBufferSleepOffset + 0.000001
+                    self.writeBufferSleepOffset = self.writeBufferSleepOffset + 0.000002
                 elif self.asyncUpdateRateController.currentFramesPerSecond > TARGET_FPS:
-                    self.writeBufferSleepOffset = self.writeBufferSleepOffset - 0.000001
+                    self.writeBufferSleepOffset = self.writeBufferSleepOffset - 0.000002
 
                 if calculatedSleepTime > self.writeBufferSleepOffset:
                     sleep(calculatedSleepTime - self.writeBufferSleepOffset)
