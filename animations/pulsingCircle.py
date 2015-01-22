@@ -53,19 +53,12 @@ class PulsingCircleAnimation:
 
         for x in range(0, 5):
             for y in range(0, 5):
-                # intensity = self.circleIntensity(x, y)
-                # get current color
-                (r, g, b) = self.device.getRgbFromBufferWithCoordinates(x, y)
-                (h, s, l) = self.colorCalculator.convertRgbToHsl(r, g, b)
-
+                # calculate new hue and lightness for current frame
                 (hueAddition, newLightness) = self.getColorForCoordinates(x, y)
+
+                # apply new hue and lightness to frame-buffer
                 (r, g, b) = self.colorCalculator.convertHslToRgb(self.basisHue + hueAddition, self.basisSaturation, newLightness)
                 self.device.setRgbColorToBufferForLedWithCoordinates(r, g, b, x, y)
-
-                # brightness = intensity + self.wavePosition
-                # hue = 
-                # hexColor = self.colorCalculator.setBrightnessToHexColor(self.animationController.getBasisColor(), brightness)
-                # self.device.setHexColorToBufferForLedWithCoordinates(hexColor, x, y)
 
     def getColorForCoordinates(self, x, y):
         intensity = math.sin(self.sinSummands[x][y] - (self.iterationStep * self.speedFactor))

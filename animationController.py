@@ -49,7 +49,7 @@ class LightAnimation:
         # set animation mode
         self.showRandomGlow = False
         self.showPulsingCircle = True
-        self.showBinaryClock = False
+        self.showBinaryClock = True
 
         # start timers of the selected animations
         self.prepareAnimations()
