@@ -19,29 +19,29 @@ DEVICE_FILE = '/dev/tty.usbmodem14211'
 DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 25
 TARGET_FPS = 90
-BE_VERBOSE = True
 # DRY_RUN = True
 DRY_RUN = False
 
 
 
 class DeviceController:
-    def __init__(self):
+    def __init__(self, verbose, showUpdates):
         # initializations
+        self.beVerbose = verbose
         self.colorCalculator = ColorCalculator()
         self.deviceConnected = False
         self.countUpdatesBuffer = 0
         self.writeBufferSleepOffset = 0
-        self.asyncConsoleEvent = Event()
-        self.asyncConsole = AsyncConsole(self, self.asyncConsoleEvent)
-        self.asyncConsole.start()
+        self.asyncUpdateRateController = AsyncUpdateRateController(self, showUpdates)
 
         # establish connection to device
         try:
             if not DRY_RUN: self.serialConnection = serial.Serial(DEVICE_FILE, DEVICE_BAUDRATE)
             self.deviceConnected = True
-        except (SerialException, ValueError) as e:
-            print('Can not establish a serial connection to the device: SerialException or ValueError!')
+        except:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print('\n', exc_type, fname, exc_tb.tb_lineno, '\ncan not establish a serial connection to the dev')
             exit()
 
         # build header for buffer
@@ -56,15 +56,16 @@ class DeviceController:
             self.buffer.append(0)                                                        # fill up every channel of every LED with zeros
 
         # wait for initialization
-        if BE_VERBOSE: print('wait for Arduino to be initialized')
+        if self.beVerbose:
+            print('wait for Arduino to be initialized')
         if not DRY_RUN: sleep(5)
-        self.asyncConsoleEvent.set()
+        self.asyncUpdateRateController.start()
 
     def closeConnection(self):
         self.deviceConnected = False
         if not DRY_RUN:
             self.serialConnection.close()
-        if BE_VERBOSE:
+        if self.beVerbose:
             print('serial connection closed')
 
     # correct wiring
@@ -148,9 +149,9 @@ class DeviceController:
 
                 # auto correct sleep time to reach target FPS
                 calculatedSleepTime = (1 / TARGET_FPS) - (calculationTimeForFrame / 1000000)
-                if self.asyncConsole.currentFramesPerSecond < TARGET_FPS:
+                if self.asyncUpdateRateController.currentFramesPerSecond < TARGET_FPS:
                     self.writeBufferSleepOffset = self.writeBufferSleepOffset + 0.000001
-                elif self.asyncConsole.currentFramesPerSecond > TARGET_FPS:
+                elif self.asyncUpdateRateController.currentFramesPerSecond > TARGET_FPS:
                     self.writeBufferSleepOffset = self.writeBufferSleepOffset - 0.000001
 
                 if calculatedSleepTime > self.writeBufferSleepOffset:
@@ -166,29 +167,27 @@ class DeviceController:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('\n', exc_type, fname, exc_tb.tb_lineno, '\nerror sending data to device! closing connection')
-            print('error values - calculationTimeForFrame: ' + str(calculationTimeForFrame) + ', writeBufferSleepOffset: ' + str(self.writeBufferSleepOffset))
             self.closeConnection()
             exit()
 
 
-class AsyncConsole(Thread):
-    def __init__(self, deviceController, event):
+class AsyncUpdateRateController(Thread):
+    def __init__(self, deviceController, showUpdates):
         self.device = deviceController
-        self.threadingEvent = event
+        self.showUpdates = showUpdates
         self.currentFramesPerSecond = 3000
 
         # inital method calls
         Thread.__init__(self)
 
     def run(self):
-        while self.threadingEvent.wait():
-            self.threadingEvent.clear()
-            self.__timerTickPrintUpdateRate()
+        self.__timerTickPrintUpdateRate()
 
     def __timerTickPrintUpdateRate(self):
         if self.device.deviceConnected: # and self.device.printUpdateRate:
-            if BE_VERBOSE: stdout.write("\r" + 'update rate: ' + str(self.device.countUpdatesBuffer) + ' updates/sec ')
-            stdout.flush()
+            if self.showUpdates:
+                stdout.write("\r" + 'update rate: ' + str(self.device.countUpdatesBuffer) + ' updates/sec ')
+                stdout.flush()
             self.currentFramesPerSecond = self.device.countUpdatesBuffer
             self.device.countUpdatesBuffer = 0
 

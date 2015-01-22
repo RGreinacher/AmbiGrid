@@ -21,9 +21,11 @@ from colorCalculator import ColorCalculator
 #import animations
 from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
+from binaryClock import BinaryClockAnimation
 
 # defining constants
 BE_VERBOSE = False
+SHOW_UPDATE_RATE = False
 ANTWORTEN_GREEN = 0x86BC25
 FACEBOOK_BLUE = 0x558FC6
 ORANGE = 0xff4200
@@ -34,7 +36,7 @@ WHITE = 0xffffff
 class LightAnimation:
     def __init__(self): 
         # initializations
-        self.device = DeviceController()
+        self.device = DeviceController(BE_VERBOSE, SHOW_UPDATE_RATE)
         self.colorCalculator = ColorCalculator()
         self.basisColor = ORANGE
         self.binaryClockColor = WHITE
@@ -42,7 +44,7 @@ class LightAnimation:
         # initialize animations
         self.randomGlowAnimation = RandomGlowAnimation(self)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self)
-        # self.binaryClockAnimation = BinaryClockAnimation(self)
+        self.binaryClockAnimation = BinaryClockAnimation(self, BE_VERBOSE)
 
         # set animation mode
         self.showRandomGlow = False
@@ -50,7 +52,7 @@ class LightAnimation:
         self.showBinaryClock = False
 
         # start timers of the selected animations
-        self.startAnimations()
+        self.prepareAnimations()
 
         # define helper for calculation time tracking
         currentTime = lambda: int(round(time.time() * 1000))
@@ -67,7 +69,7 @@ class LightAnimation:
                 if self.showPulsingCircle:
                     self.pulsingCircleAnimation.renderNextFrame()
                 if self.showBinaryClock:
-                    self.applyBinaryCockToDeviceBuffer()
+                    self.binaryClockAnimation.renderNextFrame()
 
                 # measure current time again to calculate animation time
                 animationEndTime = datetime.datetime.now()
@@ -80,14 +82,16 @@ class LightAnimation:
             print('\nreceived KeyboardInterrupt; closing connection');
             self.device.closeConnection()
 
-    def startAnimations(self):
+    def prepareAnimations(self):
+        # perpare pulsing circle
+        if self.showPulsingCircle:
+            self.pulsingCircleAnimation.start()
+
         # prepare binary clock buffer
         if self.showBinaryClock:
-            # self.binaryClockAnimation.start()
-            return
+            self.binaryClockAnimation.start()
         else:
-            return
-            # self.binaryClockAnimation.stop()
+            self.binaryClockAnimation.stop()
 
     def getDevice(self):
         return self.device
@@ -95,64 +99,8 @@ class LightAnimation:
     def getBasisColor(self):
         return self.basisColor
 
-    # ******************** animation: binary clock ********************
-    def prepareBinaryClock(self):
-        self.binaryClockBuffer = array('B')
-        for i in range(0, 25):
-            self.binaryClockBuffer.append(0)
-        self.binaryClockTick()
-
-    def applyBinaryCockToDeviceBuffer(self):
-        for bufferIndex in range(0, 25):
-            if self.binaryClockBuffer[bufferIndex] == 1:
-                self.device.setHexColorToBufferForLedWithIndex(self.binaryClockColor, self.device.convertAlignedIndexToWiredIndex(bufferIndex))
-
-    def binaryClockTick(self):
-        if not self.showPulsingCircle:
-            self.device.clearBuffer()
-
-        time = time = datetime.datetime.now().time()
-        time = ["{0:b}".format(time.hour), "{0:b}".format(time.minute), "{0:b}".format(time.second)]
-
-        # reset to clock buffer
-        for i in range (0, 25):
-            self.binaryClockBuffer[i] = 0
-
-        # hours in the first line
-        lengthOfBitString = len(time[0])
-        prefixingZeros = 5 - lengthOfBitString
-        for i in range(0, lengthOfBitString):
-            self.binaryClockBuffer[prefixingZeros + i] = int(time[0][i])
-
-        # minutes in the second / third row; seconds in the fourth / fifth row
-        for timeElement in range(1, 3):
-            lengthOfBitString = len(time[timeElement])
-            prefixingZeros = 6 - lengthOfBitString
-
-            for i in range(0, lengthOfBitString):
-                if prefixingZeros == 0 and i == 0:
-                    bufferPosition = i
-                elif prefixingZeros == 0 and i > 0: # break line after the first of the six digits
-                    bufferPosition = i + 4
-                else:
-                    bufferPosition = i + 4 + prefixingZeros
-
-                self.binaryClockBuffer[((timeElement - 1) * 10) + 5 + bufferPosition] = int(time[timeElement][i])
-
-        if BE_VERBOSE:
-            print('\nbinary clock debugging:')
-            for row in range(0, 5):
-                bufferLine = ''
-                for column in range(0, 5):
-                    if self.binaryClockBuffer[column + (row * 5)] == 1:
-                        bufferLine += 'X '
-                    else:
-                        bufferLine += '- '
-                print(bufferLine)
-
-        # restart timer
-        self.binaryClockTimer = Timer(1, self.binaryClockTick)
-        self.binaryClockTimer.start()
+    def getBinaryClockColor(self):
+        return self.binaryClockColor
 
 
 
@@ -164,9 +112,13 @@ class LightAnimation:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Controller program for Arduino powerd RGB-LED strand")
     parser.add_argument("-v", "--verbose", action = "store_true", dest = "verbose", help = "enables verbose mode")
+    parser.add_argument("-fps", "--updates", action = "store_true", dest = "updates", help = "display USB update rate per second")
     args = parser.parse_args()
 
     if args.verbose:
         BE_VERBOSE = True
+
+    if args.updates:
+        SHOW_UPDATE_RATE = True
 
     lightAnimation = LightAnimation()
