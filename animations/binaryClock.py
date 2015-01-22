@@ -17,13 +17,17 @@ class BinaryClockAnimation:
         self.clockIsRunning = False
         self.beVerbose = beVerbose
         self.clockColor = self.animationController.getBinaryClockColor()
+        self.clockIsOnlyAnimation = False
+
+        # create clock buffer; each value represents a bit at the clock
         self.binaryClockBuffer = array('B')
         for i in range(0, 25):
             self.binaryClockBuffer.append(0)
 
-    def start(self):
-      self.binaryClockTick()
-      self.clockIsRunning = True
+    def start(self, otherAnimationsRunning):
+        self.clockIsOnlyAnimation = not otherAnimationsRunning
+        self.clockIsRunning = True
+        self.binaryClockTick()
 
     def stop(self):
         if self.clockIsRunning:
@@ -44,7 +48,9 @@ class BinaryClockAnimation:
                 self.device.setHexColorToBufferForLedWithIndex(self.clockColor, self.device.convertAlignedIndexToWiredIndex(bufferIndex))
 
     def binaryClockTick(self):
-        self.device.clearBuffer()
+        # clear the device buffer if the clock is the only animation to reset each LED after one second
+        if self.clockIsOnlyAnimation:
+            self.device.clearBuffer()
 
         time = time = datetime.datetime.now().time()
         time = ["{0:b}".format(time.hour), "{0:b}".format(time.minute), "{0:b}".format(time.second)]

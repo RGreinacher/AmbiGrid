@@ -86,7 +86,7 @@ class LightAnimation:
 
         # prepare binary clock buffer
         if self.showBinaryClock:
-            self.binaryClockAnimation.start()
+            self.binaryClockAnimation.start(self.showRandomGlow or self.showPulsingCircle)
         else:
             self.binaryClockAnimation.stop()
 
