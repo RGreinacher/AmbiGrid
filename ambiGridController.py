@@ -62,92 +62,7 @@ class DeviceController:
         if not DRY_RUN: sleep(5)
         self.asyncUpdateRateController.start()
 
-    def closeConnection(self):
-        self.deviceConnected = False
-        if not DRY_RUN:
-            self.serialConnection.close()
-        if self.beVerbose:
-            print('serial connection closed')
-
-    # correct wiring
-    def convertAlignedIndexToWiredIndex(self, index):
-        if index >= 0 and index <= 4: # 1st row
-            index += 20
-        elif index >= 20 and index <= 24: # 5th row
-            index -= 20
-        elif index == 5:
-            index = 19
-        elif index == 6:
-            index = 18
-        elif index == 7:
-            index = 17
-        elif index == 8:
-            index = 16
-        elif index == 9:
-            index = 15
-        elif index == 15:
-            index = 9
-        elif index == 16:
-            index = 8
-        elif index == 17:
-            index = 7
-        elif index == 18:
-            index = 6
-        elif index == 19:
-            index = 5
-        return index
-
-    def clearBuffer(self):
-        for i in range(6, 6 + (NUMBER_LEDS * 3)):
-            self.buffer[i] = 0
-
-    def getNumberOfLeds(self):
-        return NUMBER_LEDS
-
-    def getRgbFromBufferWithIndex(self, index):
-        bufferIndex = 6 + (index * 3)
-
-        redChannel = self.buffer[bufferIndex]
-        greenChannel = self.buffer[bufferIndex + 1]
-        blueChannel = self.buffer[bufferIndex + 2]
-
-        return (redChannel, greenChannel, blueChannel)
-
-    def getRgbFromBufferWithCoordinates(self, xIndex, yIndex):
-        return self.getRgbFromBufferWithIndex(xIndex + (yIndex * NUMBER_LED_ROWS))
-
-    def setRgbColorToBufferForLedWithIndex(self, redChannel, greenChannel, blueChannel, ledIndex):
-        ledAddress = 6 + (ledIndex * 3)
-        self.buffer[ledAddress] = self.colorCalculator.frameRgbValue(redChannel)
-        self.buffer[ledAddress + 1] = self.colorCalculator.frameRgbValue(greenChannel)
-        self.buffer[ledAddress + 2] = self.colorCalculator.frameRgbValue(blueChannel)
-
-    def setRgbColorToBufferForLedWithCoordinates(self, redChannel, greenChannel, blueChannel, xIndex, yIndex):
-        alignedIndex = xIndex + (yIndex * NUMBER_LED_ROWS)
-        index = self.convertAlignedIndexToWiredIndex(alignedIndex) # correct wiring
-        self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, index)
-
-    def setHexColorToBufferForLedWithIndex(self, hexColor, ledIndex):
-        (redChannel, greenChannel, blueChannel) = self.colorCalculator.convertHexColorToRgb(hexColor)
-        self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, ledIndex)
-
-    def setHexColorToBufferForLedWithCoordinates(self, hexColor, xIndex, yIndex):
-        alignedIndex = xIndex + (yIndex * NUMBER_LED_ROWS)
-        index = self.convertAlignedIndexToWiredIndex(alignedIndex) # correct wiring
-        self.setHexColorToBufferForLedWithIndex(hexColor, index)
-
-    def setHexColorToBuffer(self, hexColor):
-        (redChannel, greenChannel, blueChannel) = self.colorCalculator.convertHexColorToRgb(hexColor)
-
-        for i in range(6, 81, 3):
-            self.buffer[i] = self.colorCalculator.frameRgbValue(redChannel)
-            self.buffer[i + 1] = self.colorCalculator.frameRgbValue(greenChannel)
-            self.buffer[i + 2] = self.colorCalculator.frameRgbValue(blueChannel)
-
-    def setHexColorToLeds(self, hexColor):
-        self.setHexColorToBuffer(hexColor)
-        self.writeBuffer()
-
+    # ***** controller handling **********************************
     def writeBuffer(self, calculationTimeForFrame = 0):
         try:
             if self.deviceConnected:
@@ -178,6 +93,81 @@ class DeviceController:
             print('\n', exc_type, fname, exc_tb.tb_lineno, '\nerror sending data to device! closing connection')
             self.closeConnection()
             exit()
+
+    def closeConnection(self):
+        self.deviceConnected = False
+        if not DRY_RUN:
+            self.serialConnection.close()
+        if self.beVerbose:
+            print('serial connection closed')
+
+    def clearBuffer(self):
+        for i in range(6, 6 + (NUMBER_LEDS * 3)):
+            self.buffer[i] = 0
+
+    # ***** converter **********************************
+    # correct wiring
+    def convertAlignedIndexToWiredIndex(self, index):
+        if index >= 0 and index <= 4: # 1st row
+            index += 20
+        elif index >= 20 and index <= 24: # 5th row
+            index -= 20
+        elif index == 5:
+            index = 19
+        elif index == 6:
+            index = 18
+        elif index == 7:
+            index = 17
+        elif index == 8:
+            index = 16
+        elif index == 9:
+            index = 15
+        elif index == 15:
+            index = 9
+        elif index == 16:
+            index = 8
+        elif index == 17:
+            index = 7
+        elif index == 18:
+            index = 6
+        elif index == 19:
+            index = 5
+        return index
+
+    # ***** getters **********************************
+    def getNumberOfLeds(self):
+        return NUMBER_LEDS
+
+    def getRgbFromBufferWithIndex(self, index):
+        bufferIndex = 6 + (index * 3)
+
+        redChannel = self.buffer[bufferIndex]
+        greenChannel = self.buffer[bufferIndex + 1]
+        blueChannel = self.buffer[bufferIndex + 2]
+
+        return (redChannel, greenChannel, blueChannel)
+
+    def getRgbFromBufferWithCoordinates(self, xIndex, yIndex):
+        return self.getRgbFromBufferWithIndex(xIndex + (yIndex * NUMBER_LED_ROWS))
+
+    # ***** setters **********************************
+    def setRgbColorToBufferForLedWithIndex(self, redChannel, greenChannel, blueChannel, ledIndex):
+        ledAddress = 6 + (ledIndex * 3)
+        self.buffer[ledAddress] = self.colorCalculator.frameRgbValue(redChannel)
+        self.buffer[ledAddress + 1] = self.colorCalculator.frameRgbValue(greenChannel)
+        self.buffer[ledAddress + 2] = self.colorCalculator.frameRgbValue(blueChannel)
+
+    def setRgbColorToBufferForLedWithCoordinates(self, redChannel, greenChannel, blueChannel, xIndex, yIndex):
+        alignedIndex = xIndex + (yIndex * NUMBER_LED_ROWS)
+        index = self.convertAlignedIndexToWiredIndex(alignedIndex) # correct wiring
+        self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, index)
+
+    def setRgbToBuffer(self, redChannel, greenChannel, blueChannel):
+        for i in range(6, 81, 3):
+            self.buffer[i] = self.colorCalculator.frameRgbValue(redChannel)
+            self.buffer[i + 1] = self.colorCalculator.frameRgbValue(greenChannel)
+            self.buffer[i + 2] = self.colorCalculator.frameRgbValue(blueChannel)
+
 
 
 class AsyncUpdateRateController(Thread):

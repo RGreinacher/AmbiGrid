@@ -21,10 +21,6 @@ class RandomGlowAnimation:
         self.device = self.animationController.getDevice()
         self.randomGlowingPixels = {}
 
-        hexColor = self.colorCalculator.setBrightnessToHexColor(self.animationController.getBasisColor(), self.glowingPixelBasisLightness)
-        (self.basisHue, self.basisSaturation, self.basisLightness) = self.colorCalculator.convertHexToHSL(hexColor)
-        self.device.setHexColorToLeds(hexColor)
-
         # initialize glowing pixels list
         for i in range(0, self.glowingPixelCount):
             self.randomGlowingPixels[i] = self.initializeRandomPixel()
@@ -32,15 +28,13 @@ class RandomGlowAnimation:
     def renderNextFrame(self):
         for i in range(0, self.glowingPixelCount):
             glowingPixel = self.randomGlowingPixels[i]
-
             glowingPixel['xAxisPosition'] = glowingPixel['xAxisPosition'] + 1
+
             if (glowingPixel['xAxisPosition'] / glowingPixel['speedFactor']) > (math.pi * 2):
                 self.randomGlowingPixels[i] = self.initializeRandomPixel()
             else:
-                (r, g, b) = self.device.getRgbFromBufferWithIndex(glowingPixel['index'])
-                (h, s, l) = self.colorCalculator.convertRgbToHsl(r, g, b)
                 (hueAddition, newLightness) = self.getColorForIteration(glowingPixel['xAxisPosition'], glowingPixel['speedFactor'])
-                (r, g, b) = self.colorCalculator.convertHslToRgb(self.basisHue + hueAddition, self.basisSaturation, newLightness)
+                (r, g, b) = self.colorCalculator.convertHslToRgb(self.animationController.basisHue + hueAddition, self.animationController.basisSaturation, newLightness)
                 self.device.setRgbColorToBufferForLedWithIndex(r, g, b, glowingPixel['index'])
 
     def getColorForIteration(self, xAxisPosition, speedFactor):
@@ -51,6 +45,11 @@ class RandomGlowAnimation:
     def initializeRandomPixel(self):
         randomIndex = random.randint(0, self.device.getNumberOfLeds() - 1)
         if not self.pixelIndexIsUsed(randomIndex):
+
+            # set basis color to pixel
+            # self.device.setRgbColorToBufferForLedWithIndex(self.animationController.getBasisColorAsRgb(), randomIndex)
+
+            # instantiate new pixel values for iterative color calculation
             return {'index': randomIndex,
                     'xAxisPosition': 0,
                     'speedFactor': random.randint(50, 300)}

@@ -26,7 +26,6 @@ class PulsingCircleAnimation:
         self.animationController = animationController
         self.colorCalculator = animationController.colorCalculator
         self.device = self.animationController.getDevice()
-        (self.basisHue, self.basisSaturation, self.basisLightness) = self.colorCalculator.convertHexToHSL(self.animationController.getBasisColor())
 
         # construct array of precalculated values
         self.sinSummands = [[0.0 for x in range(self.device.getNumberOfLeds())] for x in range(self.device.getNumberOfLeds())] 
@@ -57,7 +56,7 @@ class PulsingCircleAnimation:
                 (hueAddition, newLightness) = self.getColorForCoordinates(x, y)
 
                 # apply new hue and lightness to frame-buffer
-                (r, g, b) = self.colorCalculator.convertHslToRgb(self.basisHue + hueAddition, self.basisSaturation, newLightness)
+                (r, g, b) = self.colorCalculator.convertHslToRgb(self.animationController.basisHue + hueAddition, self.animationController.basisSaturation, newLightness)
                 self.device.setRgbColorToBufferForLedWithCoordinates(r, g, b, x, y)
 
     def getColorForCoordinates(self, x, y):

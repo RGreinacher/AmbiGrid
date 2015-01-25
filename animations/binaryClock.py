@@ -16,7 +16,6 @@ class BinaryClockAnimation:
 
         self.clockIsRunning = False
         self.beVerbose = beVerbose
-        self.clockColor = self.animationController.getBinaryClockColor()
         self.clockIsOnlyAnimation = False
 
         # create clock buffer; each value represents a bit at the clock
@@ -45,7 +44,11 @@ class BinaryClockAnimation:
         for bufferIndex in range(0, 25):
             if self.binaryClockBuffer[bufferIndex] == 1:
                 # overwrite pixel buffer with clock-used color
-                self.device.setHexColorToBufferForLedWithIndex(self.clockColor, self.device.convertAlignedIndexToWiredIndex(bufferIndex))
+                r = self.animationController.binaryClockColorRedChannel
+                g = self.animationController.binaryClockColorGreenChannel
+                b = self.animationController.binaryClockColorBlueChannel
+                index = self.device.convertAlignedIndexToWiredIndex(bufferIndex)
+                self.device.setRgbColorToBufferForLedWithIndex(r, g, b, index)
 
     def binaryClockTick(self):
         # clear the device buffer if the clock is the only animation to reset each LED after one second

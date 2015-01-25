@@ -56,6 +56,10 @@ class ColorCalculator:
 
         return (hue, saturation, lightness)
 
+    def convertHslToHexColor(self, hue, saturation, lightness):
+        (r, g, b) = self.convertHslToRgb(hue, saturation, lightness)
+        return self.convertRgbToHexColor(r, g, b)
+
     # # thanks to http://www.easyrgb.com/index.php?X=MATH
     def convertHslToRgb(self, hue, saturation, lightness):
         if saturation == 0:
@@ -91,7 +95,7 @@ class ColorCalculator:
             return lightness1 + ((lightness2 - lightness1) * ((2 / 3) - hue) * 6)
         return lightness1
 
-    def convertHexToHSL(self, hexColor):
+    def convertHexColorToHSL(self, hexColor):
         (redChannel, greenChannel, blueChannel) = self.convertHexColorToRgb(hexColor)
         return self.convertRgbToHsl(redChannel, greenChannel, blueChannel)
 
