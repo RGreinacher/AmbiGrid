@@ -43,6 +43,7 @@ class LightAnimation(Thread):
         self.basisColor = ORANGE
         self.binaryClockColor = WHITE
         self.basisLightness = 0.5
+        self.binaryClockLightness = 1
         self.calculateVariationsOfBasisValues()
 
         # initialize animations
@@ -92,6 +93,10 @@ class LightAnimation(Thread):
             self.device.closeConnection()
 
     def prepareAnimations(self):
+        # prepare random glow
+        if self.showRandomGlow:
+            self.randomGlowAnimation.start()
+
         # perpare pulsing circle
         if self.showPulsingCircle:
             self.pulsingCircleAnimation.start()
@@ -152,6 +157,10 @@ class LightAnimation(Thread):
     def setBasisLightness(self, lightness):
         self.basisLightness = lightness
         self.setBasisColor(self.colorCalculator.convertHslToHexColor(self.basisHue, self.basisSaturation, lightness))
+
+    def setBinaryClockLightness(self, lightness):
+        self.binaryClockLightness = lightness
+        self.setBinaryClockColor(self.colorCalculator.setBrightnessToHexColor(self.binaryClockColor, lightness))
 
     # possible values for animation (string):
     # 'randomGlow'
@@ -229,6 +238,11 @@ def startAnimationControllerThread():
             lightness = int(lightness) / 100
             print('setBasisLightness(' + str(lightness) + ')')
             lightAnimation.setBasisLightness(lightness)
+        elif entered == 'clightness':
+            lightness = input('lightness [0..100]: ')
+            lightness = int(lightness) / 100
+            print('setBinaryClockLightness(' + str(lightness) + ')')
+            lightAnimation.setBinaryClockLightness(lightness)
         else:
             print('unrecognized command!')
 

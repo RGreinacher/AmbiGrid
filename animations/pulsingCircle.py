@@ -18,8 +18,6 @@ class PulsingCircleAnimation:
         self.degreeOfColorDivergence = 20
         self.distanceToDarkness = 3.25 # 2.8 is exact radius to corners
         self.speed = 40
-        self.amplitude = 0.3 # range [0, 1]
-        self.wavePosition = self.amplitude / 2 + 0.005
         self.iterationStep = 0
 
         # initializations
@@ -32,7 +30,6 @@ class PulsingCircleAnimation:
 
     def start(self):
         # precalculated values
-        self.amplitudeFactor = self.amplitude / 2
         self.speedFactor = 1 / self.speed
         self.degreeFactor = ((self.degreeOfColorDivergence / 360) / 2)
 
@@ -53,16 +50,18 @@ class PulsingCircleAnimation:
         for x in range(0, 5):
             for y in range(0, 5):
                 # calculate new hue and lightness for current frame
-                (hueAddition, newLightness) = self.getColorForCoordinates(x, y)
+                (hueAddition, lightnessFactor) = self.getColorForCoordinates(x, y)
+                targetHue = self.animationController.basisHue + hueAddition
+                targetLightness = self.animationController.basisLightness * lightnessFactor
 
                 # apply new hue and lightness to frame-buffer
-                (r, g, b) = self.colorCalculator.convertHslToRgb(self.animationController.basisHue + hueAddition, self.animationController.basisSaturation, newLightness)
+                (r, g, b) = self.colorCalculator.convertHslToRgb(targetHue, self.animationController.basisSaturation, targetLightness)
                 self.device.setRgbColorToBufferForLedWithCoordinates(r, g, b, x, y)
 
     def getColorForCoordinates(self, x, y):
         intensity = math.sin(self.sinSummands[x][y] - (self.iterationStep * self.speedFactor))
 
         newHue = intensity * self.degreeFactor
-        newLightness = (intensity * self.amplitudeFactor) + self.wavePosition
+        newLightness = (intensity * 0.5) + 0.5
         return (newHue, newLightness)
 
