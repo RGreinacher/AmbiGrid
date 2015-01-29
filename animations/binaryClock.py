@@ -32,6 +32,7 @@ class BinaryClockAnimation:
         if self.clockIsRunning:
             try:
                 self.binaryClockTimer.cancel()
+                self.clockIsRunning = False
             except:
                 import sys
                 import os
