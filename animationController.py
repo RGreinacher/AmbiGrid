@@ -182,27 +182,30 @@ class LightAnimation(Thread):
 
     def setBasisLightness(self, lightness):
         self.basisLightness = lightness
-        self.setBasisColor(self.colorCalculator.convertHslToHexColor(self.basisHue, self.basisSaturation, lightness))
+        self.setBasisColorAsHsl(self.basisHue, self.basisSaturation, lightness)
 
     def setBinaryClockLightness(self, lightness):
         self.binaryClockLightness = lightness
         self.setBinaryClockColor(self.colorCalculator.setBrightnessToHexColor(self.binaryClockColor, lightness))
 
-    def showAnimation(self, animation, seconds = -1):
+    def showAnimation(self, animation, seconds = 10):
         if animation == 'fadeOut':
-            setterTuple = (True, False, False, False, False)
-        elif animation == 'monoColor':
-            setterTuple = (False, True, False, False, False)
-        if animation == 'randomGlow':
-            setterTuple = (False, False, True, False, False)
-        elif animation == 'pulsingCircle':
-            setterTuple = (False, False, False, True, False)
-        elif animation == 'binaryClock':
-            setterTuple = (False, False, False, False, True)
-        elif animation == 'binaryClockWithPulsingCircle':
-            setterTuple = (False, False, False, True, True)
+            self.fadeOutAnimation.secondsToFadeOut = seconds
+            self.showFadeOut = True
+        else:
+            if animation == 'monoColor':
+                setterTuple = (True, False, False, False)
+            elif animation == 'randomGlow':
+                setterTuple = (False, True, False, False)
+            elif animation == 'pulsingCircle':
+                setterTuple = (False, False, True, False)
+            elif animation == 'binaryClock':
+                setterTuple = (False, False, False, True)
+            elif animation == 'binaryClockWithPulsingCircle':
+                setterTuple = (False, False, True, True)
 
-        (self.showFadeOut, self.showMonoColor, self.showRandomGlow, self.showPulsingCircle, self.showBinaryClock) = setterTuple
+            (self.showMonoColor, self.showRandomGlow, self.showPulsingCircle, self.showBinaryClock) = setterTuple
+
         self.prepareAnimations()
 
 
@@ -233,7 +236,7 @@ def startAnimationControllerThread():
             print('showAnimation(monoColor)')
             lightAnimation.showAnimation('monoColor')
         elif entered == 'fade':
-            seconds = input('seconds to fade out: ')
+            seconds = int(input('seconds to fade out: '))
             print('showAnimation(fadeOut, ' + str(seconds) + ')')
             lightAnimation.showAnimation('fadeOut', seconds)
         elif entered == 'color':

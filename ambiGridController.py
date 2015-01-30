@@ -20,8 +20,8 @@ DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 25
 NUMBER_LED_ROWS = 5
 TARGET_FPS = 90
-DRY_RUN = True
-# DRY_RUN = False
+# DRY_RUN = True
+DRY_RUN = False
 
 
 
@@ -139,7 +139,10 @@ class DeviceController:
         return NUMBER_LEDS
 
     def getCurrentFps(self):
-        return self.asyncUpdateRateController.currentFramesPerSecond
+        if DRY_RUN:
+            return TARGET_FPS
+        else:
+            return self.asyncUpdateRateController.currentFramesPerSecond
 
     def getRgbFromBufferWithIndex(self, index):
         bufferIndex = 6 + (index * 3)
