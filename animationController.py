@@ -116,6 +116,11 @@ class LightAnimation(Thread):
         else:
             self.binaryClockAnimation.stop()
 
+    def stopAnimation(self, animationObj):
+        # stop showing fadeOut-animation
+        if type(animationObj) == type(self.fadeOutAnimation):
+            self.showFadeOut = False
+
     # ***** value calculation **********************************
     def calculateVariationsOfBasisValues(self):
         self.calculateBasisColorValuesFomHex()
@@ -181,10 +186,21 @@ class LightAnimation(Thread):
         self.calculateBinaryClockRgbValues()
 
     def setBasisLightness(self, lightness):
+        if lightness > 1:
+            lightness = 1
+        elif lightness < 0:
+            lightness = 0
+
         self.basisLightness = lightness
         self.setBasisColorAsHsl(self.basisHue, self.basisSaturation, lightness)
+        print('lightness: ' + str(lightness))
 
     def setBinaryClockLightness(self, lightness):
+        if lightness > 1:
+            lightness = 1
+        elif lightness < 0:
+            lightness = 0
+
         self.binaryClockLightness = lightness
         self.setBinaryClockColor(self.colorCalculator.setBrightnessToHexColor(self.binaryClockColor, lightness))
 

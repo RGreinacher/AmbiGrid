@@ -23,11 +23,28 @@ class FadeOutAnimation:
         self.originalSaturation = self.animationController.basisSaturation
 
     def renderNextFrame(self):
-        timeToDarkness =  datetime.datetime.now() - self.startTime
-        framesToDarkness = self.device.getCurrentFps() * (self.secondsToFadeOut - timeToDarkness.seconds)
+        currentLightness = self.animationController.basisLightness
 
-        if framesToDarkness > 0:
-            lighntessDeltaPerFrame = self.animationController.basisLightness / framesToDarkness
-            self.animationController.setBasisLightness(self.animationController.basisLightness - lighntessDeltaPerFrame)
+        if currentLightness > 0:
+            timeDelta =  datetime.datetime.now() - self.startTime
+            timeToDarkness =  self.secondsToFadeOut - timeDelta.seconds
+
+            if timeToDarkness > 0:
+                framesToDarkness = self.device.getCurrentFps() * timeToDarkness
+                lightnessDeltaPerFrame = currentLightness / framesToDarkness
+            else:
+                lightnessDeltaPerFrame = 1 / self.device.getCurrentFps()
+
+            self.animationController.setBasisLightness(currentLightness - lightnessDeltaPerFrame)
         else:
             self.animationController.setBasisLightness(0)
+            self.animationController.stopAnimation(self)
+
+
+
+        # if framesToDarkness > 0:
+        #     lightnessDeltaPerFrame = self.animationController.basisLightness / framesToDarkness
+        #     self.animationController.setBasisLightness(self.animationController.basisLightness - lightnessDeltaPerFrame)
+        # else:
+        #     self.animationController.setBasisLightness(0)
+        #     self.animationController.stopAnimation(self)
