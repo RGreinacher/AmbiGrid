@@ -193,7 +193,6 @@ class LightAnimation(Thread):
 
         self.basisLightness = lightness
         self.setBasisColorAsHsl(self.basisHue, self.basisSaturation, lightness)
-        print('lightness: ' + str(lightness))
 
     def setBinaryClockLightness(self, lightness):
         if lightness > 1:
