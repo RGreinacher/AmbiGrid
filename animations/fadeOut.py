@@ -12,6 +12,7 @@ class FadeOutAnimation:
         self.secondsToFadeOut = -1
         self.startTime = -1
         self.currentFrameNumber = 0
+        self.lastAppliedLightness = 1
 
         # initializations
         self.animationController = animationController
@@ -21,43 +22,23 @@ class FadeOutAnimation:
     def start(self):
         self.startTime = datetime.datetime.now()
         self.currentFrameNumber = 0
+        self.lastAppliedLightness = 1
         self.originalHue = self.animationController.basisHue
         self.originalSaturation = self.animationController.basisSaturation
         self.originalLightness = self.animationController.basisLightness
 
     def renderNextFrame(self):
         self.currentFrameNumber = self.currentFrameNumber + 1
-
-        # timeElapsed =  datetime.datetime.now() - self.startTime
-
-        # currentFrameNumber = timeElapsed.seconds * self.device.getCurrentFps()
         totalFramesCount = self.secondsToFadeOut * self.device.getCurrentFps()
 
         if self.currentFrameNumber < totalFramesCount:
-            # targetLightness = self.linearLightnessDecrease(totalFramesCount, self.currentFrameNumber)
             targetLightness = self.quadraticalLightnessDecrease(totalFramesCount, self.currentFrameNumber)
-            self.animationController.setBasisLightness(targetLightness)
+            if targetLightness < self.lastAppliedLightness:
+                self.animationController.setBasisLightness(targetLightness)
+                self.lastAppliedLightness = targetLightness
         else:
             self.animationController.setBasisLightness(0)
             self.animationController.stopAnimation(self)
-
-        # first attempt
-        # currentLightness = self.animationController.basisLightness
-
-        # if currentLightness > 0:
-        #     timeDelta =  datetime.datetime.now() - self.startTime
-        #     timeToDarkness =  self.secondsToFadeOut - timeDelta.seconds
-
-        #     if timeToDarkness > 0:
-        #         framesToDarkness = self.device.getCurrentFps() * timeToDarkness
-        #         lightnessDeltaPerFrame = currentLightness / framesToDarkness
-        #     else:
-        #         lightnessDeltaPerFrame = 1 / self.device.getCurrentFps()
-
-        #     self.animationController.setBasisLightness(currentLightness - lightnessDeltaPerFrame)
-        # else:
-        #     self.animationController.setBasisLightness(0)
-        #     self.animationController.stopAnimation(self)
 
     def linearLightnessDecrease(self, totalFramesCount, currentFrameNumber):
         return self.originalLightness - ((currentFrameNumber / totalFramesCount) * self.originalLightness)
