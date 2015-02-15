@@ -6,10 +6,10 @@ import sys
 sys.path.append('animations')
 
 # import python libs
-import argparse
 from daemonize import Daemonize
 from threading import Thread, Event, Timer
 from array import array
+import argparse
 import time
 import datetime
 import math
@@ -56,7 +56,7 @@ class LightAnimation(Thread):
 
         # set animation mode
         self.showFadeOut = False
-        self.showMonoColor = True
+        self.showMonoColor = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
         self.showBinaryClock = False
@@ -66,6 +66,21 @@ class LightAnimation(Thread):
 
         # instantiate as thread
         Thread.__init__(self)
+
+    def setThreadCommunicationObjects(self, communicationEvent, communicationQeue):
+        # TODO
+        print('INTERFACE NOT IMPLEMENTED!')
+
+        # {'get': 'status'}
+        # {'set': 'animation', 'name': animationName}
+        # {'set': 'fadeOut', 'time': time}
+        # {'unset': 'fadeOut'}
+        # {'set': 'baseColor', 'valueType': 'hex', 'value': secondArgument}
+        # {'set': 'baseColor', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue}
+        # {'set': 'baseColor', 'valueType': 'lightness', 'value': secondArgument}
+        # {'set': 'clockColor', 'valueType': 'hex', 'value': secondArgument}
+        # {'set': 'clockColor', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue}
+        # {'set': 'clockColor', 'valueType': 'lightness', 'value': secondArgument}
 
     def run(self):
         # run light animations

@@ -7,6 +7,7 @@ from threading import Thread, Event, Timer
 from array import array
 from time import sleep
 from sys import stdout
+from pprint import pprint as pp
 import sys
 import os
 
@@ -14,6 +15,7 @@ import os
 from colorCalculator import ColorCalculator
 
 # defining constants
+# DEVICE_FILE = '/dev/tty.usbmodem1421'
 DEVICE_FILE = '/dev/tty.usbmodem14211'
 # DEVICE_FILE = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_741333535373514081C0-if00'
 DEVICE_BAUDRATE = 115200
@@ -169,7 +171,7 @@ class DeviceController:
         self.setRgbColorToBufferForLedWithIndex(redChannel, greenChannel, blueChannel, index)
 
     def setRgbToBuffer(self, redChannel, greenChannel, blueChannel):
-        for i in range(6, 81, 3):
+        for i in range(6, (NUMBER_LEDS * 3 + 6), 3):
             self.buffer[i] = self.colorCalculator.frameRgbValue(redChannel)
             self.buffer[i + 1] = self.colorCalculator.frameRgbValue(greenChannel)
             self.buffer[i + 2] = self.colorCalculator.frameRgbValue(blueChannel)
