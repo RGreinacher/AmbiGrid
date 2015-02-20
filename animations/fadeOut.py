@@ -46,3 +46,7 @@ class FadeOutAnimation:
     def quadraticalLightnessDecrease(self, totalFramesCount, currentFrameNumber):
         squarePart = ((currentFrameNumber / totalFramesCount) - 1)
         return squarePart * squarePart * self.originalLightness
+
+    def getSecondsToFadeOut(self):
+        return self.secondsToFadeOut
+

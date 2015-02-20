@@ -67,21 +67,6 @@ class LightAnimation(Thread):
         # instantiate as thread
         Thread.__init__(self)
 
-    def setThreadCommunicationObjects(self, communicationEvent, communicationQeue):
-        # TODO
-        print('INTERFACE NOT IMPLEMENTED!')
-
-        # {'get': 'status'}
-        # {'set': 'animation', 'name': animationName}
-        # {'set': 'fadeOut', 'time': time}
-        # {'unset': 'fadeOut'}
-        # {'set': 'baseColor', 'valueType': 'hex', 'value': secondArgument}
-        # {'set': 'baseColor', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue}
-        # {'set': 'baseColor', 'valueType': 'lightness', 'value': secondArgument}
-        # {'set': 'clockColor', 'valueType': 'hex', 'value': secondArgument}
-        # {'set': 'clockColor', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue}
-        # {'set': 'clockColor', 'valueType': 'lightness', 'value': secondArgument}
-
     def run(self):
         # run light animations
         try:
@@ -113,10 +98,6 @@ class LightAnimation(Thread):
             self.device.closeConnection()
 
     def prepareAnimations(self):
-        # prepare fade out
-        if self.showFadeOut:
-            self.fadeOutAnimation.start()
-
         # prepare random glow
         if self.showRandomGlow:
             self.randomGlowAnimation.start()
@@ -139,7 +120,7 @@ class LightAnimation(Thread):
     # ***** value calculation **********************************
     def calculateVariationsOfBasisValues(self):
         self.calculateBasisColorValuesFomHex()
-        self.calculateBinaryClockRgbValues()
+        self.calculateBinaryClockColorValuesFromHex()
 
     def calculateBasisColorValuesFomHex(self):
         (bHue, bSaturation, bLightness) = self.colorCalculator.convertHexColorToHSL(self.basisColor)
@@ -150,6 +131,12 @@ class LightAnimation(Thread):
         self.basisGreenChannel = bG
         self.basisBlueChannel = bB
 
+    def calculateBasisColorValuesFomRgb(self):
+        self.basisHue = self.colorCalculator.convertRgbToHexColor(self.basisRedChannel, self.basisGreenChannel, self.basisBlueChannel)
+        (bHue, bSaturation, bLightness) = self.colorCalculator.convertRgbToHsl(self.basisRedChannel, self.basisGreenChannel, self.basisBlueChannel)
+        self.basisHue = bHue
+        self.basisSaturation = bSaturation
+
     def calculateBasisColorValuesFomHsl(self):
         (bR, bG, bB) = self.colorCalculator.convertHslToRgb(self.basisHue, self.basisSaturation, self.basisLightness)
         self.basisColor = self.colorCalculator.convertRgbToHexColor(bR, bG, bB)
@@ -157,17 +144,25 @@ class LightAnimation(Thread):
         self.basisGreenChannel = bG
         self.basisBlueChannel = bB
 
-    def calculateBinaryClockRgbValues(self):
+    def calculateBinaryClockColorValuesFromHex(self):
         (r, g, b) = self.colorCalculator.convertHexColorToRgb(self.binaryClockColor)
         self.binaryClockColorRedChannel = r
         self.binaryClockColorGreenChannel = g
         self.binaryClockColorBlueChannel = b
 
+    def calculateBinaryClockColorValuesFomRgb(self):
+        self.binaryClockColor = self.colorCalculator.convertRgbToHexColor(self.binaryClockColorRedChannel, self.binaryClockColorGreenChannel, self.binaryClockColorBlueChannel)
+
+    # ***** animation control **********************************
+    def stopFadeOut(self):
+        self.showFadeOut = False
+        return self.getStatus()
+
     # ***** getters **********************************
     def getDevice(self):
         return self.device
 
-    def getBasisColorAsHexColor(self):
+    def getBasisColorAsHex(self):
         return self.basisColor
 
     def getBasisColorAsRgb(self):
@@ -185,10 +180,37 @@ class LightAnimation(Thread):
     def getBinaryClockColorAsRgb(self):
         return (self.binaryClockColorRedChannel, self.binaryClockColorGreenChannel, self.binaryClockColorBlueChannel)
 
+    def getBinaryClockLightness(self):
+        return self.binaryClockLightness
+
+    def getStatus(self):
+        status = 'running'
+        secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
+
+        statusDictionary =  {
+                                'status': status,
+                                'baseColor': self.getBasisColorAsHex(),
+                                'clockColor': self.getBinaryClockColorAsHex(),
+                                'baseLightness': self.getBasisLightness(),
+                                'clockLightness': self.getBinaryClockLightness(),
+                                'currentFPS': self.device.getCurrentFps()
+                            }
+
+        if secondsToFadeOut >= 0:
+            statusDictionary['fadeOutIn'] = secondsToFadeOut
+
+        return statusDictionary
+
     # ***** setters **********************************
     def setBasisColorAsHex(self, hexColor):
         self.basisColor = hexColor
         self.calculateBasisColorValuesFomHex()
+
+    def setBasisColorAsRgb(self, redChannel, greenChannel, blueChannel):
+        self.basisRedChannel = redChannel
+        self.basisGreenChannel = greenChannel
+        self.basisBlueChannel = blueChannel
+        self.calculateBasisColorValuesFomRgb()
 
     def setBasisColorAsHsl(self, hue, saturation, lightness):
         self.basisHue = hue
@@ -196,9 +218,15 @@ class LightAnimation(Thread):
         self.basisLightness = lightness
         self.calculateBasisColorValuesFomHsl()
 
-    def setBinaryClockColor(self, hexColor):
+    def setBinaryClockColorAsHex(self, hexColor):
         self.binaryClockColor = hexColor
-        self.calculateBinaryClockRgbValues()
+        self.calculateBinaryClockColorValuesFromHex()
+
+    def setBinaryClockColorAsRgb(self, redChannel, greenChannel, blueChannel):
+        self.binaryClockColorRedChannel = redChannel
+        self.binaryClockColorGreenChannel = greenChannel
+        self.binaryClockColorBlueChannel = blueChannel
+        self.calculateBinaryClockColorValuesFomRgb()
 
     def setBasisLightness(self, lightness):
         if lightness > 1:
@@ -216,25 +244,26 @@ class LightAnimation(Thread):
             lightness = 0
 
         self.binaryClockLightness = lightness
-        self.setBinaryClockColor(self.colorCalculator.setBrightnessToHexColor(self.binaryClockColor, lightness))
+        self.setBinaryClockColorAsHex(self.colorCalculator.setBrightnessToHexColor(self.binaryClockColor, lightness))
+
+    def setFadeOut(seconds = 10):
+        self.fadeOutAnimation.secondsToFadeOut = seconds
+        self.showFadeOut = True
+        self.fadeOutAnimation.start()
 
     def showAnimation(self, animation, seconds = 10):
-        if animation == 'fadeOut':
-            self.fadeOutAnimation.secondsToFadeOut = seconds
-            self.showFadeOut = True
-        else:
-            if animation == 'monoColor':
-                setterTuple = (True, False, False, False)
-            elif animation == 'randomGlow':
-                setterTuple = (False, True, False, False)
-            elif animation == 'pulsingCircle':
-                setterTuple = (False, False, True, False)
-            elif animation == 'binaryClock':
-                setterTuple = (False, False, False, True)
-            elif animation == 'binaryClockWithPulsingCircle':
-                setterTuple = (False, False, True, True)
+        if animation == 'monoColor':
+            setterTuple = (True, False, False, False)
+        elif animation == 'randomGlow':
+            setterTuple = (False, True, False, False)
+        elif animation == 'pulsingCircle':
+            setterTuple = (False, False, True, False)
+        elif animation == 'binaryClock':
+            setterTuple = (False, False, False, True)
+        elif animation == 'binaryClockWithPulsingCircle':
+            setterTuple = (False, False, True, True)
 
-            (self.showMonoColor, self.showRandomGlow, self.showPulsingCircle, self.showBinaryClock) = setterTuple
+        (self.showMonoColor, self.showRandomGlow, self.showPulsingCircle, self.showBinaryClock) = setterTuple
 
         self.prepareAnimations()
 
@@ -278,8 +307,8 @@ def startAnimationControllerThread(interactiveMode = False):
             elif entered == 'ccolor':
                 color = input('hex color: ')
                 color = int(color, 16)
-                print('setBinaryClockColor(' + str(color) + ')')
-                lightAnimation.setBinaryClockColor(color)
+                print('setBinaryClockColorAsHex(' + str(color) + ')')
+                lightAnimation.setBinaryClockColorAsHex(color)
             elif entered == 'lightness':
                 lightness = input('lightness [0..100]: ')
                 lightness = int(lightness) / 100
