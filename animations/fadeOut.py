@@ -48,5 +48,9 @@ class FadeOutAnimation:
         return squarePart * squarePart * self.originalLightness
 
     def getSecondsToFadeOut(self):
-        return self.secondsToFadeOut
+        if self.startTime == -1 or not self.animationController.showFadeOut:
+            return -1
+
+        timeSinceStart = datetime.datetime.now() - self.startTime
+        return self.secondsToFadeOut - timeSinceStart.seconds
 

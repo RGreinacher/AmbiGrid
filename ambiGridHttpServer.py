@@ -58,13 +58,19 @@ class IssetHelper:
         else:
             return True
 
+    def saveIntConvert(self, integerValue, base = 10):
+        if self.isInt(integerValue, base):
+            return int(integerValue, base)
+        else:
+            return -1
+
     # return a positive (and > 0) integer (the one that comes next in the array) or -1
     def getIntAfterToken(self, array, token, distanceToToken = 1):
         if self.isValueForIndex(array, token):
             tokenIndex = array.index(token)
             if (self.isset(array, tokenIndex + distanceToToken) and
                 self.isInt(array[array.index(token) + distanceToToken]) and
-                int(array[array.index(token) + distanceToToken]) > 0):
+                int(array[array.index(token) + distanceToToken]) >= 0):
 
                 return int(array[array.index(token) + distanceToToken])
         return -1
@@ -182,7 +188,7 @@ class HTTPController(BaseHTTPRequestHandler, IssetHelper):
                 blueValue >= 0 and blueValue <= 255):
                 return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue})
 
-        elif valueType == 'lightness':
+        elif valueType == 'lightness' and self.isInt(secondArgument):
             lightnessValue = int(secondArgument)
             if lightnessValue >= 0 and lightnessValue <= 100:
                 return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'lightness', 'value': secondArgument})
@@ -201,7 +207,7 @@ class AmbiGridHttpBridge(IssetHelper):
         # self.ambiGridEvent = Event()
 
         self.ambiGridAnimationController = LightAnimation()
-        self.ambiGridAnimationController.setThreadCommunicationObjects(self.ambiGridEvent, self.communicationQueue)
+        # self.ambiGridAnimationController.setThreadCommunicationObjects(self.ambiGridEvent, self.communicationQueue)
         self.ambiGridAnimationController.start()
 
         # inital method calls
@@ -234,34 +240,34 @@ class AmbiGridHttpBridge(IssetHelper):
 
             elif message['set'] == 'baseColor' and 'valueType' in message:
                 if message['valueType'] == 'hex' and 'value' in message:
-                    self.ambiGridAnimationController.setBasisColorAsHex(message['value'])
+                    hexValue = int(message['value'], 16)
+                    self.ambiGridAnimationController.setBasisColorAsHex(hexValue)
 
                 elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
-                    red = message['redChannel']
-                    green = message['greenChannel']
-                    blue = message['blueChannel']
+                    red = int(message['redChannel'])
+                    green = int(message['greenChannel'])
+                    blue = int(message['blueChannel'])
                     self.ambiGridAnimationController.setBasisColorAsRgb(red, green, blue)
 
                 elif message['valueType'] == 'lightness' and 'value' in message:
-                    self.ambiGridAnimationController.setBasisLightness(message['lightness'])
+                    lightness = int(message['value']) / 100
+                    self.ambiGridAnimationController.setBasisLightness(lightness)
 
 
             elif message['set'] == 'clockColor' and 'valueType' in message:
                 if message['valueType'] == 'hex' and 'value' in message:
-                    self.ambiGridAnimationController.setBinaryClockColorAsHex(message['value'])
+                    hexValue = int(message['value'], 16)
+                    self.ambiGridAnimationController.setBinaryClockColorAsHex(hexValue)
 
                 elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
-                    red = message['redChannel']
-                    green = message['greenChannel']
-                    blue = message['blueChannel']
+                    red = int(message['redChannel'])
+                    green = int(message['greenChannel'])
+                    blue = int(message['blueChannel'])
                     self.ambiGridAnimationController.setBinaryClockColorAsRgb(red, green, blue)
 
                 elif message['valueType'] == 'lightness' and 'value' in message:
-                    self.ambiGridAnimationController.setBinaryClockLightness(message['lightness'])
-
-        else:
-            print('AmbiGridHttpBridge: can\'t read queued values!')
-            pprint.pprint(communicatedMessage)
+                    lightness = int(message['value']) / 100
+                    self.ambiGridAnimationController.setBinaryClockLightness(lightness)
 
         return self.ambiGridAnimationController.getStatus()
 

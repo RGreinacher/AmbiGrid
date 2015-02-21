@@ -123,3 +123,25 @@ class ColorCalculator:
         (redChannel, greenChannel, blueChannel) = self.convertHexColorToRgb(hexColor)
         (redChannel, greenChannel, blueChannel) = self.setBrightnessToRgbColor(redChannel, greenChannel, blueChannel, targetLightness)
         return self.convertRgbToHexColor(redChannel, greenChannel, blueChannel)
+
+    # transforms the rgb color values into a common HTML hex format
+    def getHtmlHexStringFromRgbColor(self, redChannel, greenChannel, blueChannel):
+        redChannelAsHex = hex(redChannel)
+        redChannelAsHex = redChannelAsHex[2:]
+        if len(redChannelAsHex) == 1:
+            redChannelAsHex = '0' + redChannelAsHex
+        hexString = redChannelAsHex
+
+        greenChannelAsHex = hex(greenChannel)
+        greenChannelAsHex = greenChannelAsHex[2:]
+        if len(greenChannelAsHex) == 1:
+            greenChannelAsHex = '0' + greenChannelAsHex
+        hexString = hexString + greenChannelAsHex
+
+        blueChannelAsHex = hex(blueChannel)
+        blueChannelAsHex = blueChannelAsHex[2:]
+        if len(blueChannelAsHex) == 1:
+            blueChannelAsHex = '0' + blueChannelAsHex
+        hexString = hexString + blueChannelAsHex
+
+        return '#' + hexString
