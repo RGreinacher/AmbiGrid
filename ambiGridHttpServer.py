@@ -9,7 +9,6 @@ from daemonize import Daemonize
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import argparse
 import json
-import pprint
 
 # import project libs
 from animationController import LightAnimation
@@ -111,8 +110,19 @@ class HTTPController(BaseHTTPRequestHandler, IssetHelper):
     def setAmbiGridHttpBridge(self, bridge):
         self.bridge = bridge
 
+    def prepareResourceElements(self):
+        self.resourceElements = []
+        self.jsonpCallback = ''
+
+        for element in self.path.split('/'):
+            if 'callback' in element:
+                secondArgumentPosition = element.find('&')
+                self.jsonpCallback = element[10:secondArgumentPosition]
+            else:
+                self.resourceElements.append(element)
+
     def do_GET(self):
-        self.resourceElements = self.path.split('/')
+        self.prepareResourceElements()
         returnDict = {}
 
         if 'ambiGridApi' in self.resourceElements:
@@ -135,11 +145,17 @@ class HTTPController(BaseHTTPRequestHandler, IssetHelper):
             returnDict = {'error': 'wrong address, wrong parameters or no such resource'}
             self.send_response(404)
 
-        # headers and define the response content type
-        self.send_header('Content-type', 'application/json')
+        # create a message that may be encapsulated in a JSONP callback function
+        if self.jsonpCallback != '':
+            self.send_header('Content-type', 'application/text')
+            jsonMessage = json.dumps(returnDict, ensure_ascii = False)
+            message = self.jsonpCallback + '(' + jsonMessage + ');'
+        else:
+            self.send_header('Content-type', 'application/json')
+            message = json.dumps(returnDict, ensure_ascii = False)
+
         self.end_headers()
 
-        message = json.dumps(returnDict, ensure_ascii = False)
         try:
             self.wfile.write(bytes(message, 'UTF-8'))
         except BrokenPipeError:
