@@ -4,6 +4,7 @@
 # definde import paths
 import sys
 sys.path.append('animations')
+sys.path.append('system')
 
 # import python libs
 from daemonize import Daemonize
@@ -24,11 +25,12 @@ from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
 from binaryClock import BinaryClockAnimation
 from monoColor import MonoColor
+from monoPixel import MonoPixel
 from fadeOut import FadeOutAnimation
 
 # defining constants
 BE_VERBOSE = False
-SHOW_UPDATE_RATE = False
+SHOW_UPDATE_RATE = True
 ANTWORTEN_GREEN = 0x86BC25
 FACEBOOK_BLUE = 0x558FC6
 ORANGE = 0xff4200
@@ -37,19 +39,20 @@ WHITE = 0xffffff
 
 
 class LightAnimation(Thread):
-    def __init__(self): 
+    def __init__(self):
         # initializations
         self.device = DeviceController(BE_VERBOSE, SHOW_UPDATE_RATE)
         self.colorCalculator = ColorCalculator()
         self.basisColor = ORANGE
         self.binaryClockColor = WHITE
-        self.basisLightness = 0.5
+        self.basisLightness = 0.51
         self.binaryClockLightness = 1
         self.calculateVariationsOfBasisValues()
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
         self.monoColor = MonoColor(self)
+        self.monoPixel = MonoPixel(self)
         self.randomGlowAnimation = RandomGlowAnimation(self)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self)
         self.binaryClockAnimation = BinaryClockAnimation(self, BE_VERBOSE)
@@ -57,8 +60,9 @@ class LightAnimation(Thread):
         # set animation mode
         self.showFadeOut = False
         self.showMonoColor = False
+        self.showMonoPixel = False
         self.showRandomGlow = False
-        self.showPulsingCircle = False
+        self.showPulsingCircle = True
         self.showBinaryClock = False
 
         # start timers of the selected animations
@@ -79,6 +83,8 @@ class LightAnimation(Thread):
                     self.fadeOutAnimation.renderNextFrame()
                 if self.showMonoColor:
                     self.monoColor.renderNextFrame()
+                if self.showMonoPixel:
+                    self.monoPixel.renderNextFrame()
                 if self.showRandomGlow:
                     self.randomGlowAnimation.renderNextFrame()
                 if self.showPulsingCircle:
