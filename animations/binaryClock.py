@@ -48,7 +48,7 @@ class BinaryClockAnimation:
         r = self.animationController.binaryClockColorRedChannel
         g = self.animationController.binaryClockColorGreenChannel
         b = self.animationController.binaryClockColorBlueChannel
-        index = self.device.convertAlignedIndexToWiredIndex(bufferIndex)
+        index = self.device.pixelMap[bufferIndex]
         self.device.setRgbColorToBufferForLedWithIndex(r, g, b, index)
 
   def binaryClockTick(self):
