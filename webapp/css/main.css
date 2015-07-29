@@ -1,0 +1,102 @@
+body {
+    padding-bottom: 10px;
+}
+
+footer {
+  text-align: center;
+}
+
+
+/* RGB & HEX */
+
+#hsl-picker {
+}
+
+#hue, #saturation, #lightness {
+  display: block;
+  margin: 10px 0;
+}
+
+#hue {
+  background: #ff0000;
+}
+
+#saturation {
+  background: #777777;
+}
+
+#lightness {
+  background: #777777;
+}
+
+#rgb-picker {
+}
+
+#red, #green, #blue {
+  display: block;
+  margin: 10px 0;
+}
+
+#red {
+  background: #ff0000;
+}
+
+#green {
+  background: #00ff00;
+}
+
+#blue {
+  background: #0000ff;
+}
+
+.define-hex-color {
+  float: right;
+}
+
+#ambiGrid-base-color-hex {
+  padding: 4px 6px;
+  text-align: center;
+  vertical-align: top;
+  width: 120px;
+}
+
+.ambiGrid-set-base-color {
+  vertical-align: top;
+  width: 120px;
+}
+
+/* HSL */
+
+/* Animation */
+
+#fade-out-time-picker {
+}
+
+#fade-out-time {
+  display: block;
+  margin: 10px 0;
+  background: #777777;
+}
+
+.tooltip {
+	display: block;
+	position: absolute;
+	border: 1px solid #D9D9D9;
+	font: 400 12px/12px Arial;
+	border-radius: 3px;
+	background: #fff;
+	top: 1px;
+	padding: 5px;
+	left: 36px;
+	text-align: center;
+	width: 50px;
+  opacity: 1;
+}
+.tooltip strong {
+	display: block;
+	padding: 2px;
+}
+
+.ambiGrid-unset-fade-out {
+  float: right;
+}

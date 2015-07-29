@@ -3,331 +3,223 @@
 # Read the description.md for a basic understanding of the server API.
 
 # import python libs
-from threading import Thread, Event, Timer
-from queue import Queue
-from daemonize import Daemonize
+# from threading import Thread, Event, Timer
+# from queue import Queue
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import argparse
 import json
 
 # import project libs
-from animationController import LightAnimation
-
-# defining constants and globals:
-HTTP_PORT = 4444
-GOOD_NIGHT_TIME_TO_START_WITH_VOLUME_DECREASE = 600 # 10 minutes
-BE_VERBOSE = False
-NORMAL_STATUS = 'running'
-SLEEP_TIMER_STATUS = 'goingToSleep'
-SILENCE_TIMER_STATUS = 'goingToSilence'
-GOOD_NIGHT_TIMER_STATUS = 'goingToSleepAndSilence'
+from issetHelper import IssetHelper
 
 
 
-class IssetHelper:
-  def isset(self, dictionary, key):
-    try:
-      dictionary[key]
-    except (NameError, KeyError, IndexError) as e:
-      return False
-    else:
-      return True
-
-  def isInt(self, integerValue, base = 10):
-    try:
-      int(integerValue, base)
-    except (ValueError, TypeError) as e:
-      return False
-    else:
-      return True
-
-  def isFloat(self, floatingValue):
-    try:
-      float(floatingValue)
-    except (ValueError, TypeError) as e:
-      return False
-    else:
-      return True
-
-  def isValueForIndex(self, array, valueForIndex):
-    try:
-      array.index(valueForIndex)
-    except ValueError:
-      return False
-    else:
-      return True
-
-  def saveIntConvert(self, integerValue, base = 10):
-    if self.isInt(integerValue, base):
-      return int(integerValue, base)
-    else:
-      return -1
-
-  # return a positive (and > 0) integer (the one that comes next in the array) or -1
-  def getIntAfterToken(self, array, token, distanceToToken = 1):
-    if self.isValueForIndex(array, token):
-      tokenIndex = array.index(token)
-      if (self.isset(array, tokenIndex + distanceToToken) and
-        self.isInt(array[array.index(token) + distanceToToken]) and
-        int(array[array.index(token) + distanceToToken]) >= 0):
-
-        return int(array[array.index(token) + distanceToToken])
-    return -1
-
-  # return a positive float (the one that comes next in the array) or -1.0
-  def getFloatAfterToken(self, array, token, distanceToToken = 1):
-    if self.isValueForIndex(array, token) :
-      tokenIndex = array.index(token)
-      if (self.isset(array, tokenIndex + distanceToToken) and
-        self.isFloat(array[array.index(token) + distanceToToken]) and
-        float(array[array.index(token) + distanceToToken]) >= 0):
-
-        return float(array[array.index(token) + distanceToToken])
-    return -1.0
-
-  # return a positive float (the one that comes next in the array) or -1.0
-  def getStringAfterToken(self, array, token, distanceToToken = 1):
-    if self.isValueForIndex(array, token):
-      tokenIndex = array.index(token)
-      if self.isset(array, tokenIndex + distanceToToken):
-        return array[tokenIndex + distanceToToken]
-
-    return ''
-
-
-
-# ambiGridApi/status -> {status: ANIMATION_NAME, baseColor: #FF0099, clockColor: #00FF99, baseLightness: [0..1], clockLightness: [0..1], currentFPS: [0..100] [, fadeOutIn: [int]]]}
-# ambiGridApi/setAnimation/ANIMATION_NAME -> {STATUS}
-# ambiGridApi/setFadeOut/[int]] -> {STATUS}
-# ambiGridApi/stopFadeOut -> {STATUS}
-# ambiGridApi/setBaseColor/hex/FF0099 -> {STATUS}
-# ambiGridApi/setBaseColor/rgb/[0..255]/[0..255]/[0..255] -> {STATUS}
-# ambiGridApi/setBaseColor/lightness/[0..100] -> {STATUS}
-# ambiGridApi/setClockColor/hex/FF0099 -> {STATUS}
-# ambiGridApi/setClockColor/rgb/[0..255]/[0..255]/[0..255] -> {STATUS}
-# ambiGridApi/setClockColor/lightness/[0..100] -> {STATUS}
+# This HTTP server implements the AmbiGrid API.
+# Read the README.md file to get an understanding of the API
 class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
-  def setAmbiGridHttpBridge(self, bridge):
-    self.bridge = bridge
 
-  def prepareResourceElements(self):
-    self.resourceElements = []
-    self.jsonpCallback = ''
+    def setReferences(self, bridge, verbose):
+        self.bridge = bridge
+        self.be_verbose = verbose
 
-    for element in self.path.split('/'):
-      if 'callback' in element:
-        secondArgumentPosition = element.find('&')
-        self.jsonpCallback = element[10:secondArgumentPosition]
-      else:
-        self.resourceElements.append(element)
+    def prepareResourceElements(self):
+        self.resourceElements = []
+        self.jsonpCallback = ''
 
-  def do_GET(self):
-    self.prepareResourceElements()
-    returnDict = {}
+        for element in self.path.split('/'):
+            if 'callback' in element:
+                secondArgumentPosition = element.find('&')
+                self.jsonpCallback = element[10:secondArgumentPosition]
+            else:
+                self.resourceElements.append(element)
 
-    if 'ambiGridApi' in self.resourceElements:
-      if 'status' in self.resourceElements:
-        returnDict = self.statusRequest()
-      elif 'setAnimation' in self.resourceElements:
-        returnDict = self.setAnimationRequest()
-      elif 'setFadeOut' in self.resourceElements:
-        returnDict = self.setFadeOutRequest()
-      elif 'stopFadeOut' in self.resourceElements:
-        returnDict = self.stopFadeOutRequest()
-      elif 'setBaseColor' in self.resourceElements:
-        returnDict = self.setColorRequest('base')
-      elif 'setClockColor' in self.resourceElements:
-        returnDict = self.setColorRequest('clock')
+    def do_GET(self):
+        self.prepareResourceElements()
+        returnDict = {}
 
-    # error handling for all other requests:
-    if returnDict == {}:
-      if BE_VERBOSE: print('AmbiGrid HTTPInterface: request with unrecognized arguments')
-      returnDict = {'error': 'wrong address, wrong parameters or no such resource'}
-      self.send_response(404)
+        if 'ambiGridApi' in self.resourceElements:
+            if 'status' in self.resourceElements:
+                returnDict = self.statusRequest()
+            elif 'setAnimation' in self.resourceElements:
+                returnDict = self.setAnimationRequest()
+            elif 'setFadeOut' in self.resourceElements:
+                returnDict = self.setFadeOutRequest()
+            elif 'stopFadeOut' in self.resourceElements:
+                returnDict = self.stopFadeOutRequest()
+            elif 'setBaseColor' in self.resourceElements:
+                returnDict = self.setColorRequest('base')
+            elif 'setClockColor' in self.resourceElements:
+                returnDict = self.setColorRequest('clock')
 
-    # create a message that may be encapsulated in a JSONP callback function
-    if self.jsonpCallback != '':
-      self.send_header('Content-type', 'application/text')
-      jsonMessage = json.dumps(returnDict, ensure_ascii = False)
-      message = self.jsonpCallback + '(' + jsonMessage + ');'
-    else:
-      self.send_header('Content-type', 'application/json')
-      message = json.dumps(returnDict, ensure_ascii = False)
+        # error handling for all other requests:
+        if returnDict == {}:
+            if self.be_verbose:
+                print(
+                    'AmbiGrid HTTPInterface: request with unrecognized arguments')
+            returnDict = {
+                'error': 'wrong address, wrong parameters or no such resource'}
+            self.send_response(404)
 
-    self.end_headers()
+        # create a message that may be encapsulated in a JSONP callback
+        # function
+        if self.jsonpCallback != '':
+            self.send_header('Content-type', 'application/text')
+            jsonMessage = json.dumps(returnDict, ensure_ascii=False)
+            message = self.jsonpCallback + '(' + jsonMessage + ');'
+        else:
+            self.send_header('Content-type', 'application/json')
+            message = json.dumps(returnDict, ensure_ascii=False)
 
-    try:
-      self.wfile.write(bytes(message, 'UTF-8'))
-    except BrokenPipeError:
-      if BE_VERBOSE: print('AmbiGrid HTTPInterface: current connection failed (broken pipe)')
-    return
+        self.end_headers()
 
-  def statusRequest(self):
-    self.send_response(200)
-    return self.bridge.ambiGridRequest({'get': 'status'})
+        try:
+            self.wfile.write(bytes(message, 'UTF-8'))
+        except BrokenPipeError:
+            if self.be_verbose:
+                print(
+                    'AmbiGrid HTTPInterface: current connection failed (broken pipe)')
+        return
 
-  def setAnimationRequest(self):
-    self.send_response(202)
-    animationName = self.getStringAfterToken(self.resourceElements, 'setAnimation')
-    return self.bridge.ambiGridRequest({'set': 'animation', 'name': animationName})
+    def statusRequest(self):
+        self.send_response(200)
+        return self.bridge.ambiGridRequest({'get': 'status'})
 
-  def setFadeOutRequest(self):
-    time = self.getIntAfterToken(self.resourceElements, 'setFadeOut') # identify fade out time
-    if time > 0:
-      self.send_response(202)
-      return self.bridge.ambiGridRequest({'set': 'fadeOut', 'time': time})
-    else:
-      self.send_response(400)
-      if BE_VERBOSE: print('AmbiGrid HTTPInterface: error parsing fade out time')
-      return {'error': 'bad fade out value'}
+    def setAnimationRequest(self):
+        self.send_response(202)
+        animationName = self.getStringAfterToken(
+            self.resourceElements, 'setAnimation')
+        return self.bridge.ambiGridRequest({'set': 'animation', 'name': animationName})
 
-  def stopFadeOutRequest(self):
-    self.send_response(202)
-    return self.bridge.ambiGridRequest({'unset': 'fadeOut'})
+    def setFadeOutRequest(self):
+        # identify fade out time
+        time = self.getIntAfterToken(self.resourceElements, 'setFadeOut')
+        if time > 0:
+            self.send_response(202)
+            return self.bridge.ambiGridRequest({'set': 'fadeOut', 'time': time})
+        else:
+            self.send_response(400)
+            if self.be_verbose:
+                print('AmbiGrid HTTPInterface: error parsing fade out time')
+            return {'error': 'bad fade out value'}
 
-  def setColorRequest(self, colorDifference = 'base'):
-    self.send_response(202)
-    ucColorDifference = colorDifference.capitalize()
-    valueType = self.getStringAfterToken(self.resourceElements, 'set' + ucColorDifference + 'Color')
-    secondArgument = self.getStringAfterToken(self.resourceElements, 'set' + ucColorDifference + 'Color', 2)
+    def stopFadeOutRequest(self):
+        self.send_response(202)
+        return self.bridge.ambiGridRequest({'unset': 'fadeOut'})
 
-    if valueType == 'hex' and self.isInt(secondArgument, 16):
-      return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'hex', 'value': secondArgument})
+    def setColorRequest(self, colorDifference='base'):
+        self.send_response(202)
+        ucColorDifference = colorDifference.capitalize()
+        valueType = self.getStringAfterToken(
+            self.resourceElements, 'set' + ucColorDifference + 'Color')
+        secondArgument = self.getStringAfterToken(
+            self.resourceElements, 'set' + ucColorDifference + 'Color', 2)
 
-    elif valueType == 'rgb' and self.isInt(secondArgument):
-      redValue = int(secondArgument)
-      greenValue = self.getIntAfterToken(self.resourceElements, 'set' + ucColorDifference + 'Color', 3)
-      blueValue = self.getIntAfterToken(self.resourceElements, 'set' + ucColorDifference + 'Color', 4)
+        if valueType == 'hex' and self.isInt(secondArgument, 16):
+            return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'hex', 'value': secondArgument})
 
-      if (redValue >= 0 and redValue <= 255 and
-        greenValue >= 0 and greenValue <= 255 and
-        blueValue >= 0 and blueValue <= 255):
-        return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue})
+        elif valueType == 'rgb' and self.isInt(secondArgument):
+            redValue = int(secondArgument)
+            greenValue = self.getIntAfterToken(
+                self.resourceElements, 'set' + ucColorDifference + 'Color', 3)
+            blueValue = self.getIntAfterToken(
+                self.resourceElements, 'set' + ucColorDifference + 'Color', 4)
 
-    elif valueType == 'lightness' and self.isInt(secondArgument):
-      lightnessValue = int(secondArgument)
-      if lightnessValue >= 0 and lightnessValue <= 100:
-        return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'lightness', 'value': secondArgument})
+            if (redValue >= 0 and redValue <= 255 and
+                    greenValue >= 0 and greenValue <= 255 and
+                    blueValue >= 0 and blueValue <= 255):
+                return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue})
 
-    self.send_response(400)
-    if BE_VERBOSE: print('AmbiGrid HTTPInterface: error parsing ' + colorDifference + ' color value')
-    return {'error': 'bad ' + colorDifference + ' color value'}
+        elif valueType == 'lightness' and self.isInt(secondArgument):
+            lightnessValue = int(secondArgument)
+            if lightnessValue >= 0 and lightnessValue <= 100:
+                return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'lightness', 'value': secondArgument})
 
+        self.send_response(400)
+        if self.be_verbose:
+            print('AmbiGrid HTTPInterface: error parsing ' +
+                  colorDifference + ' color value')
+        return {'error': 'bad ' + colorDifference + ' color value'}
 
 
 class AmbiGridHttpBridge(IssetHelper):
-  def __init__(self):
-    # define members:
-    # self.communicationQueue = Queue()
-    # self.serverEvent = Event()
-    # self.ambiGridEvent = Event()
 
-    self.ambiGridAnimationController = LightAnimation()
-    # self.ambiGridAnimationController.setThreadCommunicationObjects(self.ambiGridEvent, self.communicationQueue)
-    self.ambiGridAnimationController.start()
+    def __init__(self, net_port, lightAnimationController, verbose = False):
+        # define members:
+        # self.communicationQueue = Queue()
+        # self.serverEvent = Event()
+        # self.ambiGridEvent = Event()
+        self.be_verbose = verbose
 
-    # inital method calls
-    httpInterface = HTTPInterface
-    httpInterface.setAmbiGridHttpBridge(httpInterface, self)
+        self.animationController = lightAnimationController
+        # self.animationController.setThreadCommunicationObjects(self.ambiGridEvent, self.communicationQueue)
 
-    try:
-      # Create a web server and define the handler to manage the incoming request
-      server = HTTPServer(('', HTTP_PORT), httpInterface)
-      print('AmbiGrid HTTP Sever is up and running at port:', HTTP_PORT)
+        # inital method calls
+        httpInterface = HTTPInterface
+        httpInterface.setReferences(httpInterface, self, verbose)
 
-      # Wait forever for incoming http requests
-      server.serve_forever()
+        try:
+            # Create a web server and define the handler to manage the incoming
+            # request
+            server = HTTPServer(('', net_port), httpInterface)
+            print('AmbiGrid HTTP Sever is up and running at port:', net_port)
 
-    except KeyboardInterrupt:
-      if BE_VERBOSE: print('AmbiGridHttpBridge: received interrupt signal; shutting down the HTTP server')
-      server.socket.close()
+            # Wait forever for incoming http requests
+            server.serve_forever()
 
-  def ambiGridRequest(self, message):
-    if 'unset' in message:
-      if message['unset'] == 'fadeOut':
-        self.ambiGridAnimationController.stopFadeOut()
+        except KeyboardInterrupt:
+            if self.be_verbose:
+                print('AmbiGridHttpBridge: received interrupt signal;\
+                    shutting down the HTTP server')
+            server.socket.close()
 
-    elif 'set' in message:
-      if message['set'] == 'fadeOut':
-        self.ambiGridAnimationController.setFadeOut(message['time'])
+    def ambiGridRequest(self, message):
+        if 'set' in message:
+            self.setRequest(message)
 
-      elif message['set'] == 'animation' and 'name' in message:
-        self.ambiGridAnimationController.showAnimation(message['name'])
+        elif 'unset' in message:
+            self.unsetRequest(message)
 
-      elif message['set'] == 'baseColor' and 'valueType' in message:
-        if message['valueType'] == 'hex' and 'value' in message:
-          hexValue = int(message['value'], 16)
-          self.ambiGridAnimationController.setBasisColorAsHex(hexValue)
+        return self.animationController.getStatus()
 
-        elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
-          red = int(message['redChannel'])
-          green = int(message['greenChannel'])
-          blue = int(message['blueChannel'])
-          self.ambiGridAnimationController.setBasisColorAsRgb(red, green, blue)
+        # # send status request to sleep server via communication queue
+        # self.communicationQueue.put(message)
+        # self.serverEvent.set()
 
-        elif message['valueType'] == 'lightness' and 'value' in message:
-          lightness = int(message['value']) / 100
-          self.ambiGridAnimationController.setBasisLightness(lightness)
+        # # wait for answer & process it
+        # self.ambiGridEvent.wait()
+        # self.ambiGridEvent.clear()
 
+        # communicatedMessage = self.communicationQueue.get()
+        # if self.isset(communicatedMessage, 'status') or self.isset(communicatedMessage, 'error'):
+        #     return communicatedMessage
+        # else:
+        #     print('AmbiGridHttpBridge: can\'t read queued values!')
+        #     pprint.pprint(communicatedMessage)
 
-      elif message['set'] == 'clockColor' and 'valueType' in message:
-        if message['valueType'] == 'hex' and 'value' in message:
-          hexValue = int(message['value'], 16)
-          self.ambiGridAnimationController.setBinaryClockColorAsHex(hexValue)
+    def setRequest(self, message):
+        if message['set'] == 'fadeOut':
+            self.animationController.setFadeOut(message['time'])
 
-        elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
-          red = int(message['redChannel'])
-          green = int(message['greenChannel'])
-          blue = int(message['blueChannel'])
-          self.ambiGridAnimationController.setBinaryClockColorAsRgb(red, green, blue)
+        elif message['set'] == 'animation' and 'name' in message:
+            self.animationController.showAnimation(message['name'])
 
-        elif message['valueType'] == 'lightness' and 'value' in message:
-          lightness = int(message['value']) / 100
-          self.ambiGridAnimationController.setBinaryClockLightness(lightness)
+        elif message['set'] == 'baseColor' and 'valueType' in message:
+            if message['valueType'] == 'hex' and 'value' in message:
+                hexValue = int(message['value'], 16)
+                self.animationController.setBasisColorAsHex(
+                    hexValue)
 
-    return self.ambiGridAnimationController.getStatus()
+            elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
+                red = int(message['redChannel'])
+                green = int(message['greenChannel'])
+                blue = int(message['blueChannel'])
+                self.animationController.setBasisColorAsRgb(
+                    red, green, blue)
 
-    # # send status request to sleep server via communication queue
-    # self.communicationQueue.put(message)
-    # self.serverEvent.set()
+            elif message['valueType'] == 'lightness' and 'value' in message:
+                lightness = int(message['value']) / 100
+                self.animationController.setBasisLightness(
+                    lightness)
 
-    # # wait for answer & process it
-    # self.ambiGridEvent.wait()
-    # self.ambiGridEvent.clear()
-
-    # communicatedMessage = self.communicationQueue.get()
-    # if self.isset(communicatedMessage, 'status') or self.isset(communicatedMessage, 'error'):
-    #     return communicatedMessage
-    # else:
-    #     print('AmbiGridHttpBridge: can\'t read queued values!')
-    #     pprint.pprint(communicatedMessage)
-
-
-
-# ************************************************
-# non object orientated entry code goes down here:
-# ************************************************
-def main():
-  serverInstance = AmbiGridHttpBridge()
-  # serverInstance.start()
-
-# check if this code is run as a module or was included into another project
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description = "Backend for receiving AmbiGrid control signals over the HTTP.")
-  parser.add_argument("-d", "--daemon", action = "store_true", dest = "daemon", help = "enables daemon mode")
-  parser.add_argument("-v", "--verbose", action = "store_true", dest = "verbose", help = "enables verbose mode")
-  parser.add_argument("-p", "--port", type=int, help = "specifies the networking port number")
-  args = parser.parse_args()
-
-  if args.verbose:
-    BE_VERBOSE = True
-
-  if args.port:
-    HTTP_PORT = args.port
-
-  if args.daemon:
-    pidFile = "/tmp/ambiGridHttpInterfaceDaemon.pid"
-    daemon = Daemonize(app='AmbiGrid HTTP Interface Daemon', pid=pidFile, action=main)
-    daemon.start()
-  else:
-    main()
+    def unsetRequest(self, message):
+        if message['unset'] == 'fadeOut':
+            self.animationController.stopFadeOut()

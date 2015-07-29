@@ -4,166 +4,228 @@ function AmbientController() {
   /*global $ */
   /*global console */
 
-  var buttonFeedbackTime = 1000;
   var _this = this;
 
-  this.ambiGridServerAddress = 'http://172.20.0.12:4444/';
+  // this.ambiGridServerAddress = 'http://172.20.0.12:4444/';
+  this.ambiGridServerAddress = 'http://127.0.0.1:4444/';
   this.ambiGridApiAddress = this.ambiGridServerAddress + 'ambiGridApi/';
   this.sliders;
+  this.colorSliderState = false; // can be 'hsl', 'rgb' or false
+
+  // ********** init elements ****************************************
 
   this.init = function() {
     $('#ambiGrid-address').html(this.ambiGridServerAddress);
 
-    this.setupNoUiSlider();
+    // init noUiSlider
+    this.sliders = document.getElementsByClassName('sliders');
+    this.setupNoUiColorSlider();
+    this.setupNoUiTimePicker();
 
-    // base color
-    $('#ambiGrid-base-color-lightness').change(function() {
-      var lightness = $(this).val();
-      var targetUri = _this.ambiGridApiAddress + 'setBaseColor/lightness/' + lightness;
-      _this.apiRequestWithFeedbackForButton(targetUri);
-    });
+    // init every other interaction
+    _this.initHexColorInput();
+    _this.initFadeOutMechanics();
+    _this.initSetAnimationButtons();
 
-    $('.ambiGrid-set-base-color').click(function(event) {
-      var hexColor = $('#ambiGrid-base-color-hex').val();
-      if (hexColor.length == 7) {
-        var targetUri = _this.ambiGridApiAddress + 'setBaseColor/hex/' + hexColor.substring(1);
-        _this.apiRequestWithFeedbackForButton(targetUri);
-      }
-
-      event.preventDefault();
-    });
-
-    // clock color
-    $('#ambiGrid-clock-color-lightness').change(function() {
-      var lightness = $(this).val();
-      var targetUri = _this.ambiGridApiAddress + 'setClockColor/lightness/' + lightness;
-      _this.apiRequestWithFeedbackForButton(targetUri);
-    });
-
-    $('.ambiGrid-set-clock-color').click(function(event) {
-      var hexColor = $('#ambiGrid-clock-color-hex').val();
-      if (hexColor.length == 7) {
-        var targetUri = _this.ambiGridApiAddress + 'setClockColor/hex/' + hexColor.substring(1);
-        _this.apiRequestWithFeedbackForButton(targetUri);
-      }
-
-      event.preventDefault();
-    });
-
-    // start fade-out
-    $('.ambiGrid-set-fade-out').click(function(event) {
-      var timeToFadeOut = $('#ambiGrid-time-to-fade-out').val();
-      console.log(timeToFadeOut);
-      var targetUri = _this.ambiGridApiAddress + 'setFadeOut/' + (timeToFadeOut * 60);
-      console.log(targetUri);
-      _this.apiRequestWithFeedbackForButton(targetUri);
-      event.preventDefault();
-    });
-
-    // stop fade-out
-    $('.ambiGrid-unset-fade-out').click(function(event) {
-      var targetUri = _this.ambiGridApiAddress + 'stopFadeOut';
-      _this.apiRequestWithFeedbackForButton(targetUri);
-      event.preventDefault();
-    });
-
-    // set animation handler
-    $('.ambiGrid-set-animation-mono').click({
-      animationName: 'monoColor'
-    }, this.setAnimationHandler);
-    $('.ambiGrid-set-animation-pulsing-circle').click({
-      animationName: 'pulsingCircle'
-    }, this.setAnimationHandler);
-    $('.ambiGrid-set-animation-random-glow').click({
-      animationName: 'randomGlow'
-    }, this.setAnimationHandler);
-    $('.ambiGrid-set-animation-binary-clock').click({
-      animationName: 'binaryClock'
-    }, this.setAnimationHandler);
-    $('.ambiGrid-set-animation-clock-circle').click({
-      animationName: 'binaryClockWithPulsingCircle'
-    }, this.setAnimationHandler);
-
-    //this.updateStatus();
+    // ask for the current AmbiGrid state
+    this.updateStatus();
   };
 
-  this.setupNoUiSlider = function() {
-    _this.sliders = document.getElementsByClassName('sliders');
+  this.initHexColorInput = function() {
+    $('.ambiGrid-set-base-color').click(function(event) {
+      var hexColor = $('#ambiGrid-base-color-hex').val();
+      var targetUri = '';
 
-    for (var i = 0; i < _this.sliders.length; i++) {
-      noUiSlider.create(_this.sliders[i], {
-        start: 5,
-        connect: 'lower',
-        orientation: 'vertical',
-        range: {
-          min: 0,
-          max: 255
-        },
-        format: wNumb({
-          decimals: 0,
-          thousand: '.'
-      	})
+      if (hexColor.length == 6) {
+        targetUri = _this.ambiGridApiAddress + 'setBaseColor/hex/' + hexColor;
+      } else if (hexColor.length == 7) {
+        targetUri = _this.ambiGridApiAddress + 'setBaseColor/hex/' + hexColor.substring(1);
+      }
+
+      _this.apiRequest(targetUri);
+      event.preventDefault();
+    });
+  };
+
+  this.initFadeOutMechanics = function() {
+    // event handler for start fade-out button
+    $('.ambiGrid-set-fade-out').click(function(event) {
+      var timeToFadeOut = _this.sliders[6].noUiSlider.get();
+      var targetUri = _this.ambiGridApiAddress + 'setFadeOut/' + (timeToFadeOut * 60);
+      _this.apiRequest(targetUri);
+      event.preventDefault();
+    });
+
+    // event handler for stop fade-out button
+    $('.ambiGrid-unset-fade-out').click(function(event) {
+      var targetUri = _this.ambiGridApiAddress + 'stopFadeOut';
+      _this.apiRequest(targetUri);
+      event.preventDefault();
+    });
+  };
+
+  this.initSetAnimationButtons = function() {
+    $('.ambiGrid-set-animation-mono').click({
+      animationName: 'monoColor',
+    }, this.setAnimationHandler);
+
+    $('.ambiGrid-set-animation-pulsing-circle').click({
+      animationName: 'pulsingCircle',
+    }, this.setAnimationHandler);
+
+    $('.ambiGrid-set-animation-random-glow').click({
+      animationName: 'randomGlow',
+    }, this.setAnimationHandler);
+
+    $('.ambiGrid-set-animation-binary-clock').click({
+      animationName: 'binaryClock',
+    }, this.setAnimationHandler);
+
+    $('.ambiGrid-set-animation-clock-circle').click({
+      animationName: 'binaryClockWithPulsingCircle',
+    }, this.setAnimationHandler);
+  };
+
+  // ********** handler setup ****************************************
+
+  this.setupNoUiColorSlider = function() {
+    for (var i = 0; i < 6; i++) {
+      if ($(_this.sliders[i]).hasClass('rgb-sliders')) {
+        noUiSlider.create(_this.sliders[i], {
+          start: 0,
+          connect: 'lower',
+          step: 1,
+          range: { min: 0, max: 255 },
+          format: wNumb({ decimals: 0, thousand: '.' }),
+        });
+
+        _this.sliders[i].noUiSlider.on('slide', _this.setRGBColor);
+      } else {
+        noUiSlider.create(_this.sliders[i], {
+          start: 0,
+          connect: 'lower',
+          range: { min: 0, max: 1 },
+        });
+
+        _this.sliders[i].noUiSlider.on('slide', _this.setHSLColor);
+      }
+
+      // remember that the sliding has stopped
+      _this.sliders[i].noUiSlider.on('change', function() {
+        _this.colorSliderState = false;
       });
-
-      // Bind the color changing function to the slide event:
-      _this.sliders[i].noUiSlider.on('slide', _this.setColor);
     }
-  }
+  };
 
-  this.setColor = function() {
+  this.setupNoUiTimePicker = function() {
+    var fadeOutTimeSlider = document.getElementById('fade-out-time');
+    var tipHandles = fadeOutTimeSlider.getElementsByClassName('noUi-handle');
+    var tooltip;
+
+    noUiSlider.create(fadeOutTimeSlider, {
+      start: 20,
+      connect: 'lower',
+      step: 1,
+      range: { min: 1, max: 60 },
+      format: wNumb({ decimals: 0, thousand: '.' }),
+    });
+
+    // add tooltip to slider
+    tooltip = document.createElement('div');
+    tipHandles[0].appendChild(tooltip);
+
+    tooltip.className += 'tooltip';
+    tooltip.innerHTML = '<span></span> min';
+    tooltip = tooltip.getElementsByTagName('span')[0];
+
+    fadeOutTimeSlider.noUiSlider.on('update', function(values, handle) {
+      tooltip.innerHTML = values[handle];
+    });
+  };
+
+  this.setHSLColor = function() {
     var apiColor = _this.sliders[0].noUiSlider.get() + '/' +
       _this.sliders[1].noUiSlider.get() + '/' +
       _this.sliders[2].noUiSlider.get();
-    var cssColor = 'rgb(' +
-      _this.sliders[0].noUiSlider.get() + ',' +
-      _this.sliders[1].noUiSlider.get() + ',' +
-      _this.sliders[2].noUiSlider.get() + ')';
+    var targetUri = _this.ambiGridApiAddress + 'setBaseColor/hsl/' + apiColor;
 
+    _this.colorSliderState = 'hsl';
+    _this.apiRequest(targetUri);
+  };
+
+  this.setRGBColor = function() {
+    var apiColor = _this.sliders[3].noUiSlider.get() + '/' +
+      _this.sliders[4].noUiSlider.get() + '/' +
+      _this.sliders[5].noUiSlider.get();
     var targetUri = _this.ambiGridApiAddress + 'setBaseColor/rgb/' + apiColor;
-    _this.apiRequestWithFeedbackForButton(targetUri);
 
-    $('.jumbotron').css('background-color', cssColor);
-  }
+    _this.colorSliderState = 'rgb';
+    _this.apiRequest(targetUri);
+  };
 
   this.setAnimationHandler = function(event) {
     var targetUri = _this.ambiGridApiAddress + 'setAnimation/' + event.data.animationName;
-    _this.apiRequestWithFeedbackForButton(targetUri);
+    _this.apiRequest(targetUri);
     event.preventDefault();
-  }
+  };
+
+  // ********** update routines ****************************************
 
   this.updateStatus = function() {
-    $.getJSON(this.ambiGridApiAddress + 'status').done(function(json) {
-      console.log('update AmbiGrid status - successfull request, JSON data: ' + json);
-
-      $('#ambiGrid-status').html('test');
-    }).fail(function(jqxhr, textStatus, error) {
-      var err = textStatus + ', ' + error;
-      console.log('request failed: ' + err);
-      $('#ambiGrid-status').html('fail');
-    });
+    var targetUri = _this.ambiGridApiAddress + 'status';
+    _this.apiRequest(targetUri);
   };
 
-  this.setAmbiGridStatusInformation = function(json) {
-    $('#ambiGrid-status').html(json.status);
-    $('#ambiGrid-time-to-fade-out').html(json.fadeOutIn);
-    $('#ambiGrid-animation').html('?');
-    $('#ambiGrid-frame-rate').html(json.currentFPS);
+  this.processAmbiGridStatus = function(json) {
+    _this.updateStatusInformationText(json);
+    _this.updateSliderPositions(json);
 
-    if ('fadeOutIn' in json) {
-      $('#ambiGrid-time-to-fade-out').html(json.fadeOutIn / 60);
+    // set the base color as preview
+    $('.jumbotron').css('background-color', json.baseHexColor);
+    $('#hue').css('background-color', json.baseHexColor);
+  };
+
+  this.updateStatusInformationText = function(statusJson) {
+    $('#ambiGrid-lightness').html(
+      Number((statusJson.currentLightness).toFixed(4))
+    );
+    $('#ambiGrid-frame-rate').html(statusJson.currentFPS);
+
+    if ('fadeOutIn' in statusJson) {
+      $('#ambiGrid-status').html(statusJson.status + ' (fading out)');
+      $('#ambiGrid-time-to-fade-out').html(statusJson.fadeOutIn / 60);
+      _this.sliders[6].noUiSlider.set(
+        parseInt(statusJson.fadeOutIn / 60)
+      );
     } else {
+      $('#ambiGrid-status').html(statusJson.status);
       $('#ambiGrid-time-to-fade-out').html('-');
     }
-
-    $('#ambiGrid-base-color-lightness').val(json.baseLightness * 100);
-    $('#ambiGrid-base-color-hex').val(json.baseColor);
-    $('#ambiGrid-clock-color-lightness').val(json.clockLightness * 100);
-    $('#ambiGrid-clock-color-hex').val(json.clockColor);
-
-    $('.jumbotron').css('background-color', json.baseColor);
   };
 
-  this.apiRequestWithFeedbackForButton = function(uri, $button) {
+  this.updateSliderPositions = function(statusJson) {
+    if (!_this.colorSliderState || _this.colorSliderState == 'rgb') {
+      // set HSL slider
+      _this.sliders[0].noUiSlider.set(statusJson.baseColorHue);
+      _this.sliders[1].noUiSlider.set(statusJson.baseColorSaturation);
+      _this.sliders[2].noUiSlider.set(statusJson.baseColorLightness);
+      console.log('update HSL sliders'); // DEBUG
+    }
+
+    if (!_this.colorSliderState || _this.colorSliderState == 'hsl') {
+      // set RGB slider
+      _this.sliders[3].noUiSlider.set(statusJson.baseColorRed);
+      _this.sliders[4].noUiSlider.set(statusJson.baseColorGreen);
+      _this.sliders[5].noUiSlider.set(statusJson.baseColorBlue);
+      console.log('update RGB sliders'); // DEBUG
+    }
+
+    $('#ambiGrid-base-color-hex').val(statusJson.baseHexColor);
+  };
+
+  // ********** networking ****************************************
+
+  this.apiRequest = function(uri, $button) {
     if (uri.slice(-1) != '/') {
       uri = uri + '/';
     }
@@ -172,21 +234,14 @@ function AmbientController() {
       url: uri,
       dataType: 'jsonp',
       success: function(json) {
-        _this.setAmbiGridStatusInformation(json);
+        _this.processAmbiGridStatus(json);
       },
 
       error: function(jqxhr, textStatus, error) {
         var err = textStatus + ', ' + error;
         console.log('request failed: ' + err);
-      }
+      },
     });
-  };
-
-  this.setFeedbackToButton = function(buttonStyle, $button) {
-    $button.addClass(buttonStyle);
-    setTimeout(function(buttonStyle, $button) {
-      $button.removeClass(buttonStyle);
-    }, buttonFeedbackTime);
   };
 
 }

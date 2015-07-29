@@ -20,8 +20,8 @@ DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 49
 NUMBER_LED_ROWS = 7
 TARGET_FPS = 67
-# DRY_RUN = True
-DRY_RUN = False
+DRY_RUN = True
+# DRY_RUN = False
 
 
 class DeviceController:

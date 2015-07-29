@@ -9,123 +9,68 @@
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/nouislider.min.css">
-    <style>
-        body {
-            padding-bottom: 10px;
-        }
-
-        #red, #green, #blue {
-        	margin: 10px;
-        	display: inline-block;
-        	height: 200px;
-        }
-
-        #colorpicker {
-        }
-
-        #result {
-        	margin: 60px 26px;
-        	height: 100px;
-        	width: 100px;
-        	display: inline-block;
-        	vertical-align: top;
-        	color: rgb(127, 127, 127);
-        	background: rgb(127, 127, 127);
-        	border: 1px solid #fff;
-        	box-shadow: 0 0 10px;
-        }
-
-        #red {
-        	background: #c0392b;
-        }
-
-        #green {
-        	background: #27ae60;
-        }
-
-        #blue {
-        	background: #2980b9;
-        }
-
-        footer {
-          text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
   </head>
   <body>
 
     <!-- Main jumbotron -->
     <div class="jumbotron">
       <div class="container">
-        <h1>AmbiGrid Controlling</h1>
-        <p>This interface controls the AmbiGrid system.</p>
+        <h1>AmbiGrid Controller</h1>
+        <p>Define the Ambient Grid mood.</p>
         <div class="col-sm-6">
           <h3>AmbiGrid: <span id="ambiGrid-status"></span></h3>
           address: <span id="ambiGrid-address"></span><br />
           time to fade-out: <span id="ambiGrid-time-to-fade-out"></span><br />
-          current animation: <span id="ambiGrid-animation"></span><br />
+          current overall lightness: <span id="ambiGrid-lightness"></span><br />
           current frame rate: <span id="ambiGrid-frame-rate"></span>
         </div>
       </div>
     </div>
 
     <div class="container ambiGridContainer">
-      <h1>AmbiGrid</h1>
+      <h1>Color settings</h1>
 
-      <!-- Settings -->
+      <!-- Color settings -->
       <div class="row well">
-        <div class="col-md-4">
-          <h3>Base Color</h3>
-          <p>Set the base color as hex or only the lightness</p>
+        <div class="col-md-6">
+          <h3>Hue, Saturation &amp; Lightness</h3>
+          <p>Adjusten the elementary color components separately</p>
 
-          <div id="colorpicker">
-          	<div class="sliders" id="red"></div>
-          	<div class="sliders" id="green"></div>
-          	<div class="sliders" id="blue"></div>
+          <div id="hsl-picker">
+          	<div class="sliders hsl-sliders" id="hue"></div>
+          	<div class="sliders hsl-sliders" id="saturation"></div>
+          	<div class="sliders hsl-sliders" id="lightness"></div>
+          </div>
+        </div>
 
-          	<div class="result"></div>
+        <div class="col-md-6">
+          <h3>Red, Green &amp; Blue</h3>
+          <p>Combining the three base colors or set a hex code</p>
+
+          <div id="rgb-picker">
+          	<div class="sliders rgb-sliders" id="red"></div>
+          	<div class="sliders rgb-sliders" id="green"></div>
+          	<div class="sliders rgb-sliders" id="blue"></div>
           </div>
 
-          <form action="#">
-            <input id="ambiGrid-base-color-lightness" type="range" min="0" max="100" value="50" />
+          <form action="#" class="define-hex-color">
             <input id="ambiGrid-base-color-hex" type="text" value="#ff4200" size="7" />
             <a class="btn btn-default ambiGrid-set-base-color" href="#" role="button">
-              Set base color
+              Set hex color
             </a>
           </form>
-        </div>
-        <div class="col-md-4">
-          <h3>Binary Clock Color</h3>
-          <p>Set the binary clock color as hex or only the lightness</p>
-          <form action="#">
-            <input id="ambiGrid-clock-color-lightness" type="range" min="0" max="100" value="50" />
-            <input id="ambiGrid-clock-color-hex" type="text" value="#ffffff" size="7" />
-            <a class="btn btn-default ambiGrid-set-clock-color" href="#" role="button">
-              Set binary clock color
-            </a>
-          </form>
-        </div>
-        <div class="col-md-4">
-          <h3>Fade Out</h3>
-          <p>Fade out the lightness of the AmbiGrid in the following number of minutes</p>
-          <form action="#">
-            <input id="ambiGrid-time-to-fade-out" type="number" value="10" />
-          </form>
-          <p>
-            <a class="btn btn-default ambiGrid-set-fade-out" href="#" role="button">
-              Start fade out
-            </a>
-            <a class="btn btn-default ambiGrid-unset-fade-out" href="#" role="button">
-              Stop fade out
-            </a>
-          </p>
         </div>
       </div>
+    </div>
+
+    <div class="container ambiGridContainer">
+      <h1>Animation settings</h1>
 
       <!-- Animations -->
       <div class="row well">
-        <div class="col-md-12">
-          <h3>Animations</h3>
+        <div class="col-md-9">
+          <h3>Light shows</h3>
           <p>Choose one animations for the AmbiGrid to perform</p>
           <p>
             <a class="btn btn-default ambiGrid-set-animation-mono" href="#" role="button">
@@ -145,13 +90,30 @@
             </a>
           </p>
         </div>
+
+        <div class="col-md-3">
+          <h3>Fade Out</h3>
+          <p>Set the lightness down low by time</p>
+          <div id="fade-out-time-picker">
+          	<div class="sliders fade-out-time-slider" id="fade-out-time"></div>
+          </div>
+
+          <p>
+            <a class="btn btn-default ambiGrid-set-fade-out" href="#" role="button">
+              Start
+            </a>
+            <a class="btn btn-default ambiGrid-unset-fade-out" href="#" role="button">
+              Stop
+            </a>
+          </p>
+        </div>
       </div>
-    </div>
 
     <hr>
 
     <footer class="col-md-12">
-      <p>&copy; Robert Greinacher 2015</p>
+      <p>
+        The <a href="https://github.com/RGreinacher/SleepServer">AmbiGrid</a> project &bull; &copy; Robert Greinacher 2015</p>
     </footer>
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>

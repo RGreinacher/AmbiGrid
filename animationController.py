@@ -48,6 +48,7 @@ class LightAnimation(Thread):
         self.basisLightness = 0.51
         self.binaryClockLightness = 1
         self.calculateVariationsOfBasisValues()
+        self.currentAnimation = ''
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
@@ -83,14 +84,19 @@ class LightAnimation(Thread):
                     self.fadeOutAnimation.renderNextFrame()
                 if self.showMonoColor:
                     self.monoColor.renderNextFrame()
+                    self.currentAnimation = 'mono color'
                 if self.showMonoPixel:
                     self.monoPixel.renderNextFrame()
+                    self.currentAnimation = 'mono pixel'
                 if self.showRandomGlow:
                     self.randomGlowAnimation.renderNextFrame()
+                    self.currentAnimation = 'random glow'
                 if self.showPulsingCircle:
                     self.pulsingCircleAnimation.renderNextFrame()
+                    self.currentAnimation = 'pulsing circle'
                 if self.showBinaryClock:
                     self.binaryClockAnimation.renderNextFrame()
+                    self.currentAnimation = 'binary clock'
 
                 # measure current time again to calculate animation time
                 animationEndTime = datetime.datetime.now()
@@ -133,6 +139,7 @@ class LightAnimation(Thread):
         (bR, bG, bB) = self.colorCalculator.convertHexColorToRgb(self.basisColor)
         self.basisHue = bHue
         self.basisSaturation = bSaturation
+        self.basisLightness = bLightness
         self.basisRedChannel = bR
         self.basisGreenChannel = bG
         self.basisBlueChannel = bB
@@ -142,6 +149,7 @@ class LightAnimation(Thread):
         (bHue, bSaturation, bLightness) = self.colorCalculator.convertRgbToHsl(self.basisRedChannel, self.basisGreenChannel, self.basisBlueChannel)
         self.basisHue = bHue
         self.basisSaturation = bSaturation
+        self.basisLightness = bLightness
 
     def calculateBasisColorValuesFomHsl(self):
         (bR, bG, bB) = self.colorCalculator.convertHslToRgb(self.basisHue, self.basisSaturation, self.basisLightness)
@@ -180,25 +188,31 @@ class LightAnimation(Thread):
     def getBasisLightness(self):
         return self.basisLightness
 
-    def getBinaryClockColorAsHex(self):
-        return self.colorCalculator.getHtmlHexStringFromRgbColor(self.binaryClockColorRedChannel, self.binaryClockColorGreenChannel, self.binaryClockColorBlueChannel)
+    def getTotalLightness(self):
+        numberOfLeds = self.device.getNumberOfLeds()
+        totalLightness = 0
 
-    def getBinaryClockColorAsRgb(self):
-        return (self.binaryClockColorRedChannel, self.binaryClockColorGreenChannel, self.binaryClockColorBlueChannel)
+        for i in range(0, numberOfLeds):
+            r, g, b = self.device.getRgbFromBufferWithIndex(i)
+            totalLightness += self.colorCalculator.convertRgbToLightness(r, g, b)
 
-    def getBinaryClockLightness(self):
-        return self.binaryClockLightness
+        return totalLightness / numberOfLeds
 
     def getStatus(self):
-        status = 'running'
         secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
+        hue, saturation, lightness = self.getBasisColorAsHsl()
+        redChannel, greenChannel, blueChannel = self.getBasisColorAsRgb()
 
         statusDictionary =  {
-                                'status': status,
-                                'baseColor': self.getBasisColorAsHex(),
-                                'clockColor': self.getBinaryClockColorAsHex(),
-                                'baseLightness': self.getBasisLightness(),
-                                'clockLightness': self.getBinaryClockLightness(),
+                                'status': self.currentAnimation,
+                                'baseHexColor': self.getBasisColorAsHex(),
+                                'baseColorRed': redChannel,
+                                'baseColorGreen': greenChannel,
+                                'baseColorBlue': blueChannel,
+                                'baseColorHue': hue,
+                                'baseColorSaturation': saturation,
+                                'baseColorLightness': lightness,
+                                'currentLightness': self.getTotalLightness(),
                                 'currentFPS': self.device.getCurrentFps()
                             }
 
@@ -272,80 +286,3 @@ class LightAnimation(Thread):
         (self.showMonoColor, self.showRandomGlow, self.showPulsingCircle, self.showBinaryClock) = setterTuple
 
         self.prepareAnimations()
-
-
-
-# ************************************************
-# non object orientated entry code goes down here:
-# ************************************************
-def startAnimationControllerThread(interactiveMode = False):
-    lightAnimation = LightAnimation()
-    lightAnimation.start()
-
-    if interactiveMode:
-        entered = ''
-        while True:
-            entered = input('call a function: ')
-            if entered == 'glow':
-                print('showAnimation(randomGlow)')
-                lightAnimation.showAnimation('randomGlow')
-            elif entered == 'circle':
-                print('showAnimation(pulsingCircle)')
-                lightAnimation.showAnimation('pulsingCircle')
-            elif entered == 'clock':
-                print('showAnimation(binaryClock)')
-                lightAnimation.showAnimation('binaryClock')
-            elif entered == 'cc':
-                print('showAnimation(binaryClockWithPulsingCircle)')
-                lightAnimation.showAnimation('binaryClockWithPulsingCircle')
-            elif entered == 'mono':
-                print('showAnimation(monoColor)')
-                lightAnimation.showAnimation('monoColor')
-            elif entered == 'fade':
-                seconds = int(input('seconds to fade out: '))
-                print('showAnimation(fadeOut, ' + str(seconds) + ')')
-                lightAnimation.showAnimation('fadeOut', seconds)
-            elif entered == 'color':
-                color = input('hex color: ')
-                color = int(color, 16)
-                print('setBasisColorAsHex(' + str(color) + ')')
-                lightAnimation.setBasisColorAsHex(color)
-            elif entered == 'ccolor':
-                color = input('hex color: ')
-                color = int(color, 16)
-                print('setBinaryClockColorAsHex(' + str(color) + ')')
-                lightAnimation.setBinaryClockColorAsHex(color)
-            elif entered == 'lightness':
-                lightness = input('lightness [0..100]: ')
-                lightness = int(lightness) / 100
-                print('setBasisLightness(' + str(lightness) + ')')
-                lightAnimation.setBasisLightness(lightness)
-            elif entered == 'clightness':
-                lightness = input('lightness [0..100]: ')
-                lightness = int(lightness) / 100
-                print('setBinaryClockLightness(' + str(lightness) + ')')
-                lightAnimation.setBinaryClockLightness(lightness)
-            else:
-                print('unrecognized command!')
-
-# check if this code is run as a module or was included into another project
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description = "Controller program for Arduino powerd RGB-LED strand")
-    parser.add_argument("-d", "--daemon", action = "store_true", dest = "daemon", help = "enables daemon mode")
-    parser.add_argument("-v", "--verbose", action = "store_true", dest = "verbose", help = "enables verbose mode")
-    parser.add_argument("-i", "--interactive", action = "store_true", dest = "interactive", help = "enables interactive mode")
-    parser.add_argument("-fps", "--updates", action = "store_true", dest = "updates", help = "display USB update rate per second")
-    args = parser.parse_args()
-
-    if args.verbose:
-        BE_VERBOSE = True
-
-    if args.updates:
-        SHOW_UPDATE_RATE = True
-
-    if args.daemon:
-        pidFile = "/tmp/sleepServerDaemon.pid"
-        daemon = Daemonize(app='SleepServer Daemon', pid=pidFile, action=startAnimationControllerThread)
-        daemon.start()
-    else:
-        startAnimationControllerThread(args.interactive and not SHOW_UPDATE_RATE)
