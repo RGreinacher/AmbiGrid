@@ -227,7 +227,6 @@ function AmbientController() {
       _this.sliders[0].noUiSlider.set(statusJson.baseColorHue);
       _this.sliders[1].noUiSlider.set(statusJson.baseColorSaturation);
       _this.sliders[2].noUiSlider.set(statusJson.baseColorLightness);
-      console.log('update HSL sliders'); // DEBUG
     }
 
     // set RGB slider if those are currently not in use
@@ -235,7 +234,6 @@ function AmbientController() {
       _this.sliders[3].noUiSlider.set(statusJson.baseColorRed);
       _this.sliders[4].noUiSlider.set(statusJson.baseColorGreen);
       _this.sliders[5].noUiSlider.set(statusJson.baseColorBlue);
-      console.log('update RGB sliders'); // DEBUG
     }
 
     $('#ambiGrid-base-color-hex').val(statusJson.baseHexColor);

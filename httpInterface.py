@@ -46,9 +46,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             elif 'stopFadeOut' in self.resourceElements:
                 returnDict = self.stopFadeOutRequest()
             elif 'setBaseColor' in self.resourceElements:
-                returnDict = self.setColorRequest('base')
-            elif 'setClockColor' in self.resourceElements:
-                returnDict = self.setColorRequest('clock')
+                returnDict = self.setColorRequest()
 
         # error handling for all other requests:
         if returnDict == {}:
@@ -105,40 +103,77 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
         self.send_response(202)
         return self.bridge.ambiGridRequest({'unset': 'fadeOut'})
 
-    def setColorRequest(self, colorDifference='base'):
+    def setColorRequest(self):
         self.send_response(202)
-        ucColorDifference = colorDifference.capitalize()
         valueType = self.getStringAfterToken(
-            self.resourceElements, 'set' + ucColorDifference + 'Color')
+            self.resourceElements, 'setBaseColor')
         secondArgument = self.getStringAfterToken(
-            self.resourceElements, 'set' + ucColorDifference + 'Color', 2)
+            self.resourceElements, 'setBaseColor', 2)
 
         if valueType == 'hex' and self.isInt(secondArgument, 16):
-            return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'hex', 'value': secondArgument})
+            return self.setHexColorRequest(secondArgument)
 
         elif valueType == 'rgb' and self.isInt(secondArgument):
-            redValue = int(secondArgument)
-            greenValue = self.getIntAfterToken(
-                self.resourceElements, 'set' + ucColorDifference + 'Color', 3)
-            blueValue = self.getIntAfterToken(
-                self.resourceElements, 'set' + ucColorDifference + 'Color', 4)
+            return self.setRgbColorRequest(secondArgument)
 
-            if (redValue >= 0 and redValue <= 255 and
-                    greenValue >= 0 and greenValue <= 255 and
-                    blueValue >= 0 and blueValue <= 255):
-                return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'rgb', 'redChannel': redValue, 'greenChannel': greenValue, 'blueChannel': blueValue})
+        elif valueType == 'hsl' and self.isFloat(secondArgument):
+            return self.setHslColorRequest(secondArgument)
 
         elif valueType == 'lightness' and self.isInt(secondArgument):
-            lightnessValue = int(secondArgument)
-            if lightnessValue >= 0 and lightnessValue <= 100:
-                return self.bridge.ambiGridRequest({'set': colorDifference + 'Color', 'valueType': 'lightness', 'value': secondArgument})
+            return self.setLightnessColorRequest(secondArgument)
 
         self.send_response(400)
         if self.be_verbose:
-            print('AmbiGrid HTTPInterface: error parsing ' +
-                  colorDifference + ' color value')
-        return {'error': 'bad ' + colorDifference + ' color value'}
+            print('AmbiGrid HTTPInterface: error parsing color value')
+        return {'error': 'bad color value'}
 
+    def setHexColorRequest(self, value):
+        return self.bridge.ambiGridRequest({
+            'set': 'baseColor',
+            'valueType': 'hex',
+            'value': value})
+
+    def setRgbColorRequest(self, colorsEncoded):
+        redValue = int(colorsEncoded)
+        greenValue = self.getIntAfterToken(
+            self.resourceElements, 'setBaseColor', 3)
+        blueValue = self.getIntAfterToken(
+            self.resourceElements, 'setBaseColor', 4)
+
+        if (redValue >= 0 and redValue <= 255 and
+                greenValue >= 0 and greenValue <= 255 and
+                blueValue >= 0 and blueValue <= 255):
+            return self.bridge.ambiGridRequest({
+                'set': 'baseColor',
+                'valueType': 'rgb',
+                'redChannel': redValue,
+                'greenChannel': greenValue,
+                'blueChannel': blueValue})
+
+    def setHslColorRequest(self, colorsEncoded):
+        hue = float(colorsEncoded)
+        saturation = self.getFloatAfterToken(
+            self.resourceElements, 'setBaseColor', 3)
+        lightness = self.getFloatAfterToken(
+            self.resourceElements, 'setBaseColor', 4)
+
+        if (hue >= 0 and hue <= 1 and
+                saturation >= 0 and saturation <= 1 and
+                lightness >= 0 and lightness <= 1):
+            return self.bridge.ambiGridRequest({
+                'set': 'baseColor',
+                'valueType': 'hsl',
+                'hue': hue,
+                'saturation': saturation,
+                'lightness': lightness})
+
+    def setLightnessColorRequest(self, value):
+        lightnessValue = int(value)
+        if lightnessValue >= 0 and lightnessValue <= 100:
+            return self.bridge.ambiGridRequest({
+                'set': 'baseColor',
+                'valueType': 'lightness',
+                'value': value})
 
 class AmbiGridHttpBridge(IssetHelper):
 
@@ -204,16 +239,41 @@ class AmbiGridHttpBridge(IssetHelper):
 
         elif message['set'] == 'baseColor' and 'valueType' in message:
             if message['valueType'] == 'hex' and 'value' in message:
-                hexValue = int(message['value'], 16)
+                try:
+                    hexValue = int(message['value'], 16)
+                except (ValueError, TypeError):
+                    return
+
                 self.animationController.setBasisColorAsHex(
                     hexValue)
 
-            elif message['valueType'] == 'rgb' and 'redChannel' in message and 'greenChannel' in message and 'blueChannel' in message:
-                red = int(message['redChannel'])
-                green = int(message['greenChannel'])
-                blue = int(message['blueChannel'])
+            elif (message['valueType'] == 'rgb' and
+                    'redChannel' in message and
+                    'greenChannel' in message and
+                    'blueChannel' in message):
+                try:
+                    red = int(message['redChannel'])
+                    green = int(message['greenChannel'])
+                    blue = int(message['blueChannel'])
+                except (ValueError, TypeError):
+                    return
+
                 self.animationController.setBasisColorAsRgb(
                     red, green, blue)
+
+            elif (message['valueType'] == 'hsl' and
+                    'hue' in message and
+                    'saturation' in message and
+                    'lightness' in message):
+                try:
+                    hue = float(message['hue'])
+                    saturation = float(message['saturation'])
+                    lightness = float(message['lightness'])
+                except (ValueError, TypeError):
+                    return
+
+                self.animationController.setBasisColorAsHsl(
+                    hue, saturation, lightness)
 
             elif message['valueType'] == 'lightness' and 'value' in message:
                 lightness = int(message['value']) / 100
