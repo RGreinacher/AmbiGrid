@@ -25,7 +25,7 @@ def startAnimationControllerThread():
     lightAnimation.start()
 
     if use_http_api:
-        serverInstance = AmbiGridHttpBridge(net_port, lightAnimation)
+        AmbiGridHttpBridge(net_port, lightAnimation)
 
 
 # check if this code is run as a module or was included into another project

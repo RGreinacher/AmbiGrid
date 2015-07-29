@@ -1,3 +1,8 @@
+#!/usr/local/bin/python3.4
+# -*- coding: utf-8 -*-
+
+
+
 class IssetHelper:
 
     def isset(self, dictionary, key):
@@ -38,8 +43,8 @@ class IssetHelper:
         else:
             return -1
 
-    # return a positive (and > 0) integer (the one that comes next in the
-    # array) or -1
+    # return a positive (and > 0) integer
+    # (the one that comes next in the array) or -1
     def getIntAfterToken(self, array, token, distanceToToken=1):
         if self.isValueForIndex(array, token):
             tokenIndex = array.index(token)

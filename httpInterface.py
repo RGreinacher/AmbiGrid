@@ -1,10 +1,9 @@
 #!/usr/local/bin/python3.4
 # -*- coding: utf-8 -*-
-# Read the description.md for a basic understanding of the server API.
+
+# Read the README.md for a basic understanding of the server API.
 
 # import python libs
-# from threading import Thread, Event, Timer
-# from queue import Queue
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
@@ -117,7 +116,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             self.resourceElements, 'setBaseColor', 2)
 
         if valueType == 'hex' and self.isInt(secondArgument, 16):
-            self.animationController.setBasisColorAsHex(secondArgument)
+            self.animationController.setBasisColorAsHex(int(secondArgument, 16))
 
         elif valueType == 'rgb' and self.isInt(secondArgument):
             return self.setRgbColorRequest(secondArgument)

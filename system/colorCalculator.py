@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+
 class ColorCalculator:
 
     def convertHexColorToRgb(self, hexColor):
@@ -135,7 +136,7 @@ class ColorCalculator:
 
     # brightness: double, 0..1
     def setBrightnessToRgbColor(self, redChannel, greenChannel, blueChannel, targetLightness):
-        (hue, saturation, lightness) = self.convertRgbToHsl(
+        (hue, saturation, _) = self.convertRgbToHsl(
             redChannel, greenChannel, blueChannel)
         (redChannel, greenChannel, blueChannel) = self.convertHslToRgb(
             hue, saturation, targetLightness)

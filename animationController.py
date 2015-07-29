@@ -7,14 +7,8 @@ sys.path.append('animations')
 sys.path.append('system')
 
 # import python libs
-from daemonize import Daemonize
-from threading import Thread, Event, Timer
-from array import array
-import argparse
-import time
+from threading import Thread
 import datetime
-import math
-import pprint
 
 # import project libs
 from ambiGridController import DeviceController

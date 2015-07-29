@@ -24,6 +24,7 @@ DRY_RUN = True
 # DRY_RUN = False
 
 
+
 class DeviceController:
 
     def __init__(self, verbose, showUpdates):
@@ -174,12 +175,13 @@ class DeviceController:
                 i + 2] = self.colorCalculator.frameRgbValue(blueChannel)
 
 
+
 class AsyncUpdateRateController(Thread):
 
     def __init__(self, deviceController, showUpdates):
         self.device = deviceController
         self.showUpdates = showUpdates
-        self.currentFramesPerSecond = 90
+        self.currentFramesPerSecond = TARGET_FPS
         self.printUpdateRateTimer = None
 
         # inital method calls
