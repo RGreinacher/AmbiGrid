@@ -84,10 +84,9 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
         self.send_response(200)
         return self.animationController.getStatus()
 
-    # TODO
     def statusWithDetailsRequest(self):
         self.send_response(200)
-        return self.animationController.getStatus()
+        return self.animationController.getStatusWithDetails()
 
     def setAnimationRequest(self):
         self.send_response(202)

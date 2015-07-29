@@ -211,13 +211,19 @@ class LightAnimation(Thread):
                                 'baseColorBlue': blueChannel,
                                 'baseColorHue': hue,
                                 'baseColorSaturation': saturation,
-                                'baseColorLightness': lightness,
-                                'currentLightness': self.getTotalLightness(),
-                                'currentFPS': self.device.getCurrentFps()
+                                'baseColorLightness': lightness
                             }
 
         if secondsToFadeOut >= 0:
             statusDictionary['fadeOutIn'] = secondsToFadeOut
+
+        return statusDictionary
+
+    def getStatusWithDetails(self):
+        statusDictionary = self.getStatus()
+
+        statusDictionary['currentLightness'] = self.getTotalLightness()
+        statusDictionary['currentFPS'] = self.device.getCurrentFps()
 
         return statusDictionary
 
