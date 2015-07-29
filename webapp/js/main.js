@@ -23,12 +23,20 @@ function AmbientController() {
     this.setupNoUiTimePicker();
 
     // init every other interaction
+    _this.initStatusUpdateButton();
     _this.initHexColorInput();
     _this.initFadeOutMechanics();
     _this.initSetAnimationButtons();
 
     // ask for the current AmbiGrid state
-    this.updateStatus();
+    this.updateStatusWithDetails();
+  };
+
+  this.initStatusUpdateButton = function() {
+    $('.ambiGrid-update-status').click(function(event) {
+      _this.updateStatusWithDetails();
+      event.preventDefault();
+    });
   };
 
   this.initHexColorInput = function() {
@@ -176,6 +184,11 @@ function AmbientController() {
     _this.apiRequest(targetUri);
   };
 
+  this.updateStatusWithDetails = function() {
+    var targetUri = _this.ambiGridApiAddress + 'status/details';
+    _this.apiRequest(targetUri);
+  };
+
   this.processAmbiGridStatus = function(json) {
     _this.updateStatusInformationText(json);
     _this.updateSliderPositions(json);
@@ -186,11 +199,6 @@ function AmbientController() {
   };
 
   this.updateStatusInformationText = function(statusJson) {
-    $('#ambiGrid-lightness').html(
-      Number((statusJson.currentLightness).toFixed(4))
-    );
-    $('#ambiGrid-frame-rate').html(statusJson.currentFPS);
-
     if ('fadeOutIn' in statusJson) {
       $('#ambiGrid-status').html(statusJson.status + ' (fading out)');
       $('#ambiGrid-time-to-fade-out').html(statusJson.fadeOutIn / 60);
@@ -201,19 +209,29 @@ function AmbientController() {
       $('#ambiGrid-status').html(statusJson.status);
       $('#ambiGrid-time-to-fade-out').html('-');
     }
+
+    if ('currentLightness' in statusJson && 'currentFPS' in statusJson) {
+      $('#ambiGrid-lightness').html(
+        Number((statusJson.currentLightness * 100).toFixed(2)) + '%'
+      );
+      $('#ambiGrid-frame-rate').html(statusJson.currentFPS);
+    } else {
+      $('#ambiGrid-lightness').html('?');
+      $('#ambiGrid-frame-rate').html('?');
+    }
   };
 
   this.updateSliderPositions = function(statusJson) {
+    // set HSL slider if those are currently not in use
     if (!_this.colorSliderState || _this.colorSliderState == 'rgb') {
-      // set HSL slider
       _this.sliders[0].noUiSlider.set(statusJson.baseColorHue);
       _this.sliders[1].noUiSlider.set(statusJson.baseColorSaturation);
       _this.sliders[2].noUiSlider.set(statusJson.baseColorLightness);
       console.log('update HSL sliders'); // DEBUG
     }
 
+    // set RGB slider if those are currently not in use
     if (!_this.colorSliderState || _this.colorSliderState == 'hsl') {
-      // set RGB slider
       _this.sliders[3].noUiSlider.set(statusJson.baseColorRed);
       _this.sliders[4].noUiSlider.set(statusJson.baseColorGreen);
       _this.sliders[5].noUiSlider.set(statusJson.baseColorBlue);

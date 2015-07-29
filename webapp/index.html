@@ -16,20 +16,34 @@
     <!-- Main jumbotron -->
     <div class="jumbotron">
       <div class="container">
-        <h1>AmbiGrid Controller</h1>
-        <p>Define the Ambient Grid mood.</p>
-        <div class="col-sm-6">
-          <h3>AmbiGrid: <span id="ambiGrid-status"></span></h3>
-          address: <span id="ambiGrid-address"></span><br />
-          time to fade-out: <span id="ambiGrid-time-to-fade-out"></span><br />
-          current overall lightness: <span id="ambiGrid-lightness"></span><br />
-          current frame rate: <span id="ambiGrid-frame-rate"></span>
+        <div class="col-sm-6 col-sm-push-6 title-box">
+          <h1>The AmbiGrid</h1>
+          <p>Emotional ambient light box.</p>
         </div>
+
+        <div class="col-sm-6 col-sm-pull-6">
+          <h3 class="align-middle status-item" id="ambiGrid-status"></h3>
+          <a class="btn btn-default ambiGrid-update-status align-middle glyphicon glyphicon-refresh" href="#" role="button"></a>
+          <br />
+
+          <span class="status-item">address:</span>
+          <span id="ambiGrid-address"></span><br />
+
+          <span class="status-item">time to fade-out:</span>
+          <span id="ambiGrid-time-to-fade-out"></span><br />
+
+          <span class="status-item">current overall lightness:</span>
+          <span id="ambiGrid-lightness"></span><br />
+
+          <span class="status-item">current frame rate:</span>
+          <span id="ambiGrid-frame-rate"></span>
+        </div>
+
       </div>
     </div>
 
     <div class="container ambiGridContainer">
-      <h1>Color settings</h1>
+      <h1>Color</h1>
 
       <!-- Color settings -->
       <div class="row well">
@@ -65,7 +79,7 @@
     </div>
 
     <div class="container ambiGridContainer">
-      <h1>Animation settings</h1>
+      <h1>Animation</h1>
 
       <!-- Animations -->
       <div class="row well">
