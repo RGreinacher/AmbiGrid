@@ -17,7 +17,8 @@ from colorController import ColorController
 # Read the README.md file to get an understanding of the API
 class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
 
-    def setReferences(self, animationController, verbose):
+    def setReferences(self, bridge, animationController, verbose):
+        self.bridge = bridge
         self.animationController = animationController
         self.colors = ColorController
         self.be_verbose = verbose
@@ -60,6 +61,9 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             returnDict = {
                 'error': 'wrong address, wrong parameters or no such resource'}
             self.send_response(404)
+
+        # add a response ID
+        returnDict['responseId'] = self.bridge.getApiResponseId()
 
         # create a message that may be encapsulated in a JSONP callback
         # function
@@ -176,9 +180,13 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
 class AmbiGridHttpBridge(IssetHelper):
 
     def __init__(self, net_port, lightAnimationController, verbose = False):
+        # initializations
+        self.responseId = 0
+
         # inital method calls
         httpInterface = HTTPInterface
-        httpInterface.setReferences(httpInterface, lightAnimationController, verbose)
+        httpInterface.setReferences(
+            httpInterface, self, lightAnimationController, verbose)
 
         try:
             # Create a web server and define the handler to manage the incoming
@@ -194,3 +202,7 @@ class AmbiGridHttpBridge(IssetHelper):
                 print('AmbiGridHttpBridge: received interrupt signal;\
                     shutting down the HTTP server')
             server.socket.close()
+
+    def getApiResponseId(self):
+        self.responseId = self.responseId + 1
+        return self.responseId

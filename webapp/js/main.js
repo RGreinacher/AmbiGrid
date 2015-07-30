@@ -7,7 +7,8 @@ function AmbientController() {
   var _this = this;
 
   // this.ambiGridServerAddress = 'http://172.20.0.12:4444/';
-  this.ambiGridServerAddress = 'http://127.0.0.1:4444/';
+  // this.ambiGridServerAddress = 'http://127.0.0.1:4444/';
+  this.ambiGridServerAddress = 'http://127.0.0.1:4443/';
   this.ambiGridApiAddress = this.ambiGridServerAddress + 'ambiGridApi/';
   this.sliders;
   this.colorSliderState = false; // can be 'hsl', 'rgb' or false
