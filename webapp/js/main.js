@@ -11,6 +11,7 @@ function AmbientController() {
   this.ambiGridApiAddress = this.ambiGridServerAddress + 'ambiGridApi/';
   this.sliders;
   this.colorSliderState = false; // can be 'hsl', 'rgb' or false
+  this.nextRequestId = -1;
 
   // ********** init elements ****************************************
 
@@ -190,6 +191,12 @@ function AmbientController() {
   };
 
   this.processAmbiGridStatus = function(json) {
+    if (json.responseId < this.nextRequestId) {
+      return;
+    }
+
+    this.nextRequestId = parseInt(json.responseId);
+
     _this.updateStatusInformationText(json);
     _this.updateSliderPositions(json);
 
@@ -242,12 +249,8 @@ function AmbientController() {
   // ********** networking ****************************************
 
   this.apiRequest = function(uri, $button) {
-    if (uri.slice(-1) != '/') {
-      uri = uri + '/';
-    }
-
     $.ajax({
-      url: uri,
+      url: this.prepareUriForRequest(uri),
       dataType: 'jsonp',
       success: function(json) {
         _this.processAmbiGridStatus(json);
@@ -258,6 +261,19 @@ function AmbientController() {
         console.log('request failed: ' + err);
       },
     });
+  };
+
+  this.prepareUriForRequest = function(uri) {
+    if (uri.slice(-1) != '/') {
+      uri = uri + '/';
+    }
+
+    // add the request ID we got from the server with the last response
+    if (this.nextRequestId > 0) {
+      uri = uri + 'requestID/' + this.nextRequestId + '/';
+    }
+
+    return uri;
   };
 
 }
