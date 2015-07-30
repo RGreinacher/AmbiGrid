@@ -4,6 +4,10 @@
 # This entry point to the project handles command line arguments and starts
 # the application with all its components.
 
+# definde import paths
+import sys
+sys.path.append('system')
+
 # import python libs
 from daemonize import Daemonize
 import argparse

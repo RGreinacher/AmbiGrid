@@ -5,75 +5,86 @@
 import math
 import random
 
+# import project libs
+from colorCalculator import ColorCalculator
+from colorController import ColorController
+
 
 
 class RandomGlowAnimation:
-  def __init__(self, animationController):
-    # animation settings
-    self.glowingPixelCount = 17
-    self.glowingPixelDegreeOfColorDivergence = 35
 
-    # initializations
-    self.animationController = animationController
-    self.colorCalculator = animationController.colorCalculator
-    self.device = self.animationController.getDevice()
-    self.randomGlowingPixels = {}
+    def __init__(self, device):
+        # animation settings
+        self.glowingPixelCount = 17
+        self.glowingPixelDegreeOfColorDivergence = 35
 
-  def start(self):
-    # precalculate factor needed for every iteration
-    self.sinFactorForHueAddition = ((self.glowingPixelDegreeOfColorDivergence / 360) / 2)
+        # initializations
+        self.colorCalculator = ColorCalculator()
+        self.colors = ColorController
+        self.device = device
+        self.randomGlowingPixels = {}
+        self.sinFactorForHueAddition = 0
 
-    # initialize glowing pixels list
-    for i in range(0, self.glowingPixelCount):
-      self.randomGlowingPixels[i] = self.initializeRandomPixel()
+    def start(self):
+        # precalculate factor needed for every iteration
+        self.sinFactorForHueAddition = (
+            (self.glowingPixelDegreeOfColorDivergence / 360) / 2)
 
-  def renderNextFrame(self):
-    for i in range(0, self.glowingPixelCount):
-      glowingPixel = self.randomGlowingPixels[i]
-      glowingPixel['xAxisPosition'] = glowingPixel['xAxisPosition'] + 1
+        # initialize glowing pixels list
+        for i in range(0, self.glowingPixelCount):
+            self.randomGlowingPixels[i] = self.initializeRandomPixel()
 
-      if (glowingPixel['xAxisPosition'] / glowingPixel['speedFactor']) > (math.pi * 2):
-        self.randomGlowingPixels[i] = self.initializeRandomPixel()
-      else:
-        # calculate new hue and lightness for current frame
-        (hueAddition, lightnessFactor) = self.getColorForIteration(glowingPixel['xAxisPosition'], glowingPixel['speedFactor'])
-        targetHue = self.animationController.basisHue + hueAddition
-        targetLightness = self.animationController.basisLightness * lightnessFactor
+    def renderNextFrame(self):
+        for i in range(0, self.glowingPixelCount):
+            glowingPixel = self.randomGlowingPixels[i]
+            glowingPixel['xAxisPosition'] = glowingPixel['xAxisPosition'] + 1
 
-        # apply new hue and lightness to frame-buffer
-        (r, g, b) = self.colorCalculator.convertHslToRgb(targetHue, self.animationController.basisSaturation, targetLightness)
-        self.device.setRgbColorToBufferForLedWithIndex(r, g, b, glowingPixel['index'])
+            if (glowingPixel['xAxisPosition'] / glowingPixel['speedFactor']) > (math.pi * 2):
+                self.randomGlowingPixels[i] = self.initializeRandomPixel()
+            else:
+                # calculate new hue and lightness for current frame
+                (hueAddition, lightnessFactor) = self.getColorForIteration(
+                    glowingPixel['xAxisPosition'], glowingPixel['speedFactor'])
+                targetHue = self.animationController.basisHue + hueAddition
+                targetLightness = self.colors.basisLightness * lightnessFactor
 
-  def getColorForIteration(self, xAxisPosition, speedFactor):
-    sinus = math.sin(xAxisPosition / speedFactor)
+                # apply new hue and lightness to frame-buffer
+                (r, g, b) = self.colorCalculator.convertHslToRgb(
+                    targetHue, self.colors.basisSaturation, targetLightness)
+                self.device.setRgbColorToBufferForLedWithIndex(
+                    r, g, b, glowingPixel['index'])
 
-    hueAddition = sinus * self.sinFactorForHueAddition
-    lightnessFactor = sinus * 0.5 + 0.5# probably manipulate this value to make more beautiful light
+    def getColorForIteration(self, xAxisPosition, speedFactor):
+        sinus = math.sin(xAxisPosition / speedFactor)
 
-    return (hueAddition, lightnessFactor)
+        hueAddition = sinus * self.sinFactorForHueAddition
+        # probably manipulate this value to make more beautiful light
+        lightnessFactor = sinus * 0.5 + 0.5
 
-  def initializeRandomPixel(self):
-    randomIndex = random.randint(0, self.device.getNumberOfLeds() - 1)
-    if not self.pixelIndexIsUsed(randomIndex):
+        return (hueAddition, lightnessFactor)
 
-      # set basis color to pixel
-      # self.device.setRgbColorToBufferForLedWithIndex(self.animationController.getBasisColorAsRgb(), randomIndex)
+    def initializeRandomPixel(self):
+        randomIndex = random.randint(0, self.device.getNumberOfLeds() - 1)
+        if not self.pixelIndexIsUsed(randomIndex):
 
-      # instantiate new pixel values for iterative color calculation
-      return {'index': randomIndex,
-          'xAxisPosition': 0,
-          'speedFactor': random.randint(50, 300)}
-    else:
-      return self.initializeRandomPixel()
+            # set basis color to pixel
+            # self.device.setRgbColorToBufferForLedWithIndex(self.colors.getBasisColorAsRgb(), randomIndex)
 
-  def pixelIndexIsUsed(self, index):
-    if self.randomGlowingPixels == {}:
-      return False
+            # instantiate new pixel values for iterative color calculation
+            return {'index': randomIndex,
+                    'xAxisPosition': 0,
+                    'speedFactor': random.randint(50, 300)}
+        else:
+            return self.initializeRandomPixel()
 
-    for pixel in self.randomGlowingPixels:
-      try:
-        if pixel['index'] == index:
-          return True
-      except (TypeError) as e:
+    def pixelIndexIsUsed(self, index):
+        if self.randomGlowingPixels == {}:
+            return False
+
+        for pixel in self.randomGlowingPixels:
+            try:
+                if pixel['index'] == index:
+                    return True
+            except (TypeError):
+                return False
         return False
-    return False

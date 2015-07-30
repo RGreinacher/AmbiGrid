@@ -9,6 +9,7 @@ import json
 
 # import project libs
 from issetHelper import IssetHelper
+from colorController import ColorController
 
 
 
@@ -18,6 +19,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
 
     def setReferences(self, animationController, verbose):
         self.animationController = animationController
+        self.colors = ColorController
         self.be_verbose = verbose
 
     def prepareResourceElements(self):
@@ -80,7 +82,6 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
         return
 
     def statusRequest(self):
-        self.send_response(200)
         return self.animationController.getStatus()
 
     def statusWithDetailsRequest(self):
@@ -116,7 +117,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             self.resourceElements, 'setBaseColor', 2)
 
         if valueType == 'hex' and self.isInt(secondArgument, 16):
-            self.animationController.setBasisColorAsHex(int(secondArgument, 16))
+            return self.colors.setBasisColorAsHex(int(secondArgument, 16))
 
         elif valueType == 'rgb' and self.isInt(secondArgument):
             return self.setRgbColorRequest(secondArgument)
@@ -144,8 +145,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
         if (redValue >= 0 and redValue <= 255 and
                 greenValue >= 0 and greenValue <= 255 and
                 blueValue >= 0 and blueValue <= 255):
-            self.animationController.setBasisColorAsRgb(
-                redValue, greenValue, blueValue)
+            self.colors.setBasisColorAsRgb(redValue, greenValue, blueValue)
 
     def setHslColorRequest(self, colorsEncoded):
         try:
@@ -160,8 +160,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
         if (hue >= 0 and hue <= 1 and
                 saturation >= 0 and saturation <= 1 and
                 lightness >= 0 and lightness <= 1):
-            self.animationController.setBasisColorAsHsl(
-                hue, saturation, lightness)
+            self.colors.setBasisColorAsHsl(hue, saturation, lightness)
 
     def setLightnessColorRequest(self, value):
         try:
@@ -170,8 +169,7 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             return
 
         if lightness >= 0 and lightness <= 100:
-            self.animationController.setBasisLightness(
-                lightness)
+            self.colors.setBasisLightness(lightness)
 
 
 
@@ -192,7 +190,7 @@ class AmbiGridHttpBridge(IssetHelper):
             server.serve_forever()
 
         except KeyboardInterrupt:
-            if self.be_verbose:
+            if verbose:
                 print('AmbiGridHttpBridge: received interrupt signal;\
                     shutting down the HTTP server')
             server.socket.close()
