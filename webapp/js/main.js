@@ -59,7 +59,7 @@ function AmbientController() {
     // event handler for start fade-out button
     $('.ambiGrid-set-fade-out').click(function(event) {
       var timeToFadeOut = _this.sliders[6].noUiSlider.get();
-      var targetUri = _this.ambiGridApiAddress + 'setFadeOut/' + (timeToFadeOut * 60);
+      var targetUri = _this.ambiGridApiAddress + 'setFadeOut/' + timeToFadeOut;
       _this.apiRequest(targetUri);
       event.preventDefault();
     });
@@ -131,11 +131,10 @@ function AmbientController() {
     var tooltip;
 
     noUiSlider.create(fadeOutTimeSlider, {
-      start: 20,
+      start: 1200,
       connect: 'lower',
       step: 1,
-      range: { min: 1, max: 60 },
-      format: wNumb({ decimals: 0, thousand: '.' }),
+      range: { min: 5, max: 3600 },
     });
 
     // add tooltip to slider
@@ -143,11 +142,12 @@ function AmbientController() {
     tipHandles[0].appendChild(tooltip);
 
     tooltip.className += 'tooltip';
-    tooltip.innerHTML = '<span></span> min';
+    tooltip.innerHTML = '<span></span>';
     tooltip = tooltip.getElementsByTagName('span')[0];
 
     fadeOutTimeSlider.noUiSlider.on('update', function(values, handle) {
-      tooltip.innerHTML = values[handle];
+      var time = _this.secondsToTimeString(parseInt(values[handle]));
+      tooltip.innerHTML = time;
     });
   };
 
@@ -258,6 +258,28 @@ function AmbientController() {
         console.log('request failed: ' + err);
       },
     });
+  };
+
+  // ********** helper ****************************************
+
+  this.secondsToTimeString = function(secs) {
+    var hours = Math.floor(secs / (60 * 60));
+    var divisorForMinutes = secs % (60 * 60);
+    var minutes = Math.floor(divisorForMinutes / 60);
+    var divisorForSeconds = divisorForMinutes % 60;
+    var seconds = Math.ceil(divisorForSeconds);
+    var time = '';
+
+    if (hours > 0) {
+      time += hours + ':';
+    }
+
+    if (minutes > 0) {
+      time += minutes + ':';
+    }
+
+    time += seconds;
+    return time;
   };
 
 }
