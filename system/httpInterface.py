@@ -34,9 +34,23 @@ class HTTPInterface(BaseHTTPRequestHandler, IssetHelper):
             else:
                 self.resourceElements.append(element)
 
+    def requestOrderIsSatisfied(self):
+        if 'requestID' in self.resourceElements:
+            requestID = self.getIntAfterToken(
+                self.resourceElements, 'requestID')
+            return self.bridge.requestIdIsCurrent(requestID)
+        return True
+
     def do_GET(self):
         self.prepareResourceElements()
         returnDict = {}
+
+        # if not self.requestOrderIsSatisfied():
+        #     requestID = str(self.getIntAfterToken(
+        #         self.resourceElements, 'requestID')) + '/'
+        #     print("\n" + 'DROPED OUTDATED REQUEST: ' + requestID)
+        #     return # drop outdated requests
+
 
         if 'ambiGridApi' in self.resourceElements:
             if 'setAnimation' in self.resourceElements:
@@ -181,7 +195,7 @@ class AmbiGridHttpBridge(IssetHelper):
 
     def __init__(self, net_port, lightAnimationController, verbose = False):
         # initializations
-        self.responseId = 0
+        self.responseID = 0
 
         # inital method calls
         httpInterface = HTTPInterface
@@ -203,6 +217,9 @@ class AmbiGridHttpBridge(IssetHelper):
                     shutting down the HTTP server')
             server.socket.close()
 
+    def requestIdIsCurrent(self, requestID):
+        return requestID >= self.responseID
+
     def getApiResponseId(self):
-        self.responseId = self.responseId + 1
-        return self.responseId
+        self.responseID = self.responseID + 1
+        return self.responseID
