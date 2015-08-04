@@ -14,13 +14,13 @@ import argparse
 
 # import project libs
 from animationController import LightAnimation
-from httpInterface import AmbiGridHttpBridge
+from networkInterface import AmbiGridNetworking
 
 # defining variable
 be_verbose = False
 show_update_rate = True
 use_http_api = False
-net_port = 4444
+ws_port = 4445
 
 
 
@@ -29,7 +29,7 @@ def startAnimationControllerThread():
     lightAnimation.start()
 
     if use_http_api:
-        AmbiGridHttpBridge(net_port, lightAnimation)
+        AmbiGridNetworking(ws_port, lightAnimation)
 
 
 # check if this code is run as a module or was included into another project
