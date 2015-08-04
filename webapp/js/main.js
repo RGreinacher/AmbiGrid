@@ -143,26 +143,20 @@ function AmbientController() {
   this.setupNoUiTimePicker = function() {
     var fadeOutTimeSlider = document.getElementById('fade-out-time');
     var tipHandles = fadeOutTimeSlider.getElementsByClassName('noUi-handle');
-    var tooltip;
+    var timeDisplay;
 
     noUiSlider.create(fadeOutTimeSlider, {
-      start: 20,
+      start: 1200,
       connect: 'lower',
       step: 1,
-      range: { min: 1, max: 60 },
-      format: wNumb({ decimals: 0, thousand: '.' }),
+      range: { min: 5, max: 3600 },
     });
 
-    // add tooltip to slider
-    tooltip = document.createElement('div');
-    tipHandles[0].appendChild(tooltip);
-
-    tooltip.className += 'tooltip';
-    tooltip.innerHTML = '<span></span> min';
-    tooltip = tooltip.getElementsByTagName('span')[0];
+    timeDisplay = document.getElementById('fade-out-time-display');
 
     fadeOutTimeSlider.noUiSlider.on('update', function(values, handle) {
-      tooltip.innerHTML = values[handle];
+      var time = _this.secondsToTimeString(parseInt(values[handle]));
+      timeDisplay.innerHTML = time;
     });
   };
 
@@ -340,6 +334,36 @@ function AmbientController() {
     }
 
     return uri;
+  };
+
+  // ********** helper ****************************************
+
+  this.secondsToTimeString = function(secs) {
+    var hours = Math.floor(secs / (60 * 60));
+    var divisorForMinutes = secs % (60 * 60);
+    var minutes = Math.floor(divisorForMinutes / 60);
+    var seconds = Math.ceil(divisorForMinutes % 60);
+
+    var time = '';
+    var postfix = 'sec';
+
+    if (seconds < 10) {
+      time = '0' + seconds;
+    } else {
+      time = seconds;
+    }
+
+    if (minutes > 0) {
+      time = minutes + ':' + time;
+      postfix = 'min';
+    }
+
+    if (hours > 0) {
+      time = hours + ':' + time;
+      postfix = 'h';
+    }
+
+    return time + ' ' + postfix;
   };
 
 }
