@@ -128,7 +128,7 @@ function AmbientController() {
   this.setupNoUiTimePicker = function() {
     var fadeOutTimeSlider = document.getElementById('fade-out-time');
     var tipHandles = fadeOutTimeSlider.getElementsByClassName('noUi-handle');
-    var tooltip;
+    var timeDisplay;
 
     noUiSlider.create(fadeOutTimeSlider, {
       start: 1200,
@@ -137,17 +137,11 @@ function AmbientController() {
       range: { min: 5, max: 3600 },
     });
 
-    // add tooltip to slider
-    tooltip = document.createElement('div');
-    tipHandles[0].appendChild(tooltip);
-
-    tooltip.className += 'tooltip';
-    tooltip.innerHTML = '<span></span>';
-    tooltip = tooltip.getElementsByTagName('span')[0];
+    timeDisplay = document.getElementById('fade-out-time-display');
 
     fadeOutTimeSlider.noUiSlider.on('update', function(values, handle) {
       var time = _this.secondsToTimeString(parseInt(values[handle]));
-      tooltip.innerHTML = time;
+      timeDisplay.innerHTML = time;
     });
   };
 
@@ -266,20 +260,28 @@ function AmbientController() {
     var hours = Math.floor(secs / (60 * 60));
     var divisorForMinutes = secs % (60 * 60);
     var minutes = Math.floor(divisorForMinutes / 60);
-    var divisorForSeconds = divisorForMinutes % 60;
-    var seconds = Math.ceil(divisorForSeconds);
-    var time = '';
+    var seconds = Math.ceil(divisorForMinutes % 60);
 
-    if (hours > 0) {
-      time += hours + ':';
+    var time = '';
+    var postfix = 'sec';
+
+    if (seconds < 10) {
+      time = '0' + seconds;
+    } else {
+      time = seconds;
     }
 
     if (minutes > 0) {
-      time += minutes + ':';
+      time = minutes + ':' + time;
+      postfix = 'min';
     }
 
-    time += seconds;
-    return time;
+    if (hours > 0) {
+      time = hours + ':' + time;
+      postfix = 'h';
+    }
+
+    return time + ' ' + postfix;
   };
 
 }
