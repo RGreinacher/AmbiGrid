@@ -211,9 +211,11 @@ function AmbientController() {
     this.updateStatusInformationText(json);
     this.updateSliderPositions(json);
 
-    // set the base color as preview
-    $('.jumbotron').css('background-color', json.baseHexColor);
+    // set back the color information to the UI as preview
+    var sliderBackgrnd = 'rgba(0, 0, 0, ' + (1 - json.baseColorLightness) + ')';
+    $('#lightness').css('background-color', sliderBackgrnd);
     $('#hue').css('background-color', json.baseHexColor);
+    $('.jumbotron').css('background-color', json.baseHexColor);
   };
 
   this.updateStatusInformationText = function(statusJson) {
