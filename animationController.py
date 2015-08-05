@@ -8,7 +8,6 @@ sys.path.append('system')
 
 # import python libs
 from threading import Thread
-import datetime
 
 # import project libs
 from ambiGridController import DeviceController
@@ -64,9 +63,6 @@ class LightAnimation(Thread):
         # run light animations
         try:
             while True:
-                # measure current time
-                animationStartTime = datetime.datetime.now()
-
                 # modify frame buffer with animation
                 if self.showFadeOut:
                     self.fadeOutAnimation.renderNextFrame()
@@ -86,12 +82,8 @@ class LightAnimation(Thread):
                     self.binaryClockAnimation.renderNextFrame()
                     self.currentAnimation = 'binary clock'
 
-                # measure current time again to calculate animation time
-                animationEndTime = datetime.datetime.now()
-                animationTimeDelta = animationEndTime - animationStartTime
-
                 # apply buffer to AmbiGrid
-                self.device.writeBuffer(animationTimeDelta.microseconds)
+                self.device.writeBuffer()
 
         except (KeyboardInterrupt):
             print('\nreceived KeyboardInterrupt; closing connection')
