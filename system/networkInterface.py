@@ -4,10 +4,11 @@
 # Read the README.md for a basic understanding of the server API.
 
 # import python libs
-from autobahn.asyncio.websocket import WebSocketServerProtocol
-from autobahn.asyncio.websocket import WebSocketServerFactory
 import json
 import asyncio
+import socket
+from autobahn.asyncio.websocket import WebSocketServerProtocol
+from autobahn.asyncio.websocket import WebSocketServerFactory
 
 # import project libs
 from issetHelper import IssetHelper
@@ -20,17 +21,16 @@ from colorController import ColorController
 class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
 
     def onOpen(self):
-        print('WebSocket connection open.')
+        if self.beVerbose: print('WebSocket connection open.')
 
     def onConnect(self, request):
-        print('Client connecting: {}'.format(request.peer))
+        if self.beVerbose: print('\nClient connecting: {}'.format(request.peer))
 
     def onClose(self, wasClean, code, reason):
-        print('WebSocket connection closed: {}'.format(reason))
+        if self.beVerbose: print('\nWebSocket connection closed: {}'.format(reason))
 
     def onMessage(self, payload, isBinary):
         if isBinary:
-            print('Ignoring binary message')
             return
 
         stringMessage = payload.decode('utf8')
@@ -49,7 +49,7 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
         self.bridge = bridge
         self.animationController = animationController
         self.colors = ColorController
-        self.be_verbose = verbose
+        self.beVerbose = verbose
 
     def processRequest(self, requestData):
         response = {}
@@ -129,10 +129,7 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
 class AmbiGridNetworking(IssetHelper):
 
     def __init__(self, wsPort, lightAnimationController, verbose = False):
-        # initializations
-        # self.responseID = 0
-
-        # prepare the protocol
+        # prepare the web socket protocol
         webSocketProtocol = WebSocketProtocol
         webSocketProtocol.setReferences(
             webSocketProtocol, self, lightAnimationController, verbose)
@@ -141,12 +138,17 @@ class AmbiGridNetworking(IssetHelper):
         factory = WebSocketServerFactory()
         factory.protocol = webSocketProtocol
 
+        # start the server event loop
+        host = socket.gethostbyname(socket.gethostname())
         loop = asyncio.get_event_loop()
-        coro = loop.create_server(factory, '172.20.3.17', wsPort)
+        coro = loop.create_server(factory, host, wsPort)
         wsServer = loop.run_until_complete(coro)
 
         try:
-            print('AmbiGrid WS Sever is up and running at port:', wsPort)
+            if verbose:
+                serverAddressString = host + ':' + str(wsPort)
+                print('AmbiGrid web socket sever is up and running at',
+                    serverAddressString)
             loop.run_forever()
         except KeyboardInterrupt:
             pass

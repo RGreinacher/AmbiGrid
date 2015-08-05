@@ -188,7 +188,9 @@ class AsyncUpdateRateController(Thread):
         Thread.__init__(self)
 
     def run(self):
-        self.__timerTickPrintUpdateRate()
+        # self.__timerTickPrintUpdateRate()
+        self.printUpdateRateTimer = Timer(1, self.__timerTickPrintUpdateRate)
+        self.printUpdateRateTimer.start()
 
     def __timerTickPrintUpdateRate(self):
         if self.device.deviceConnected:  # and self.device.printUpdateRate:

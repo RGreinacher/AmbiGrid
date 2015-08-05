@@ -21,17 +21,14 @@ from monoColor import MonoColor
 from monoPixel import MonoPixel
 from fadeOut import FadeOutAnimation
 
-# defining constants
-BE_VERBOSE = False
-SHOW_UPDATE_RATE = True
-
 
 
 class LightAnimation(Thread):
 
-    def __init__(self):
+    def __init__(self, beVerbose, showFPS):
         # initializations
-        self.device = DeviceController(BE_VERBOSE, SHOW_UPDATE_RATE)
+        self.beVerbose = beVerbose
+        self.device = DeviceController(beVerbose, showFPS)
         self.colors = ColorController
         self.colors.setDeviceReference(self.device)
         self.currentAnimation = ''
@@ -43,7 +40,7 @@ class LightAnimation(Thread):
         self.randomGlowAnimation = RandomGlowAnimation(self)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self.device)
         self.binaryClockAnimation = BinaryClockAnimation(
-            self.device, BE_VERBOSE)
+            self.device, self.beVerbose)
 
         # set animation mode
         self.showFadeOut = False

@@ -17,19 +17,19 @@ from animationController import LightAnimation
 from networkInterface import AmbiGridNetworking
 
 # defining variable
-be_verbose = False
-show_update_rate = True
-use_http_api = False
-ws_port = 4445
+beVerbose = False
+showFPS = False
+useWebSocketsApi = False
+webSocketsPort = 4445
 
 
 
 def startAnimationControllerThread():
-    lightAnimation = LightAnimation()
+    lightAnimation = LightAnimation(beVerbose, showFPS)
     lightAnimation.start()
 
-    if use_http_api:
-        AmbiGridNetworking(ws_port, lightAnimation)
+    if useWebSocketsApi:
+        AmbiGridNetworking(webSocketsPort, lightAnimation, beVerbose)
 
 
 # check if this code is run as a module or was included into another project
@@ -67,16 +67,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.http:
-        use_http_api = True
+        useWebSocketsApi = True
 
     if args.port:
         net_port = args.port
 
     if args.verbose:
-        be_verbose = True
+        beVerbose = True
 
     if args.updates:
-        show_update_rate = True
+        showFPS = True
 
     if args.daemon:
         pidFile = "/tmp/sleepServerDaemon.pid"
