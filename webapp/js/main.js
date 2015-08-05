@@ -39,7 +39,9 @@ function AmbientController() {
     this.initWebSocket();
 
     // ask for the current AmbiGrid state
-    this.updateStatusWithDetails();
+    setTimeout(function() {
+      _this.updateStatusWithDetails();
+    }, 500);
   };
 
   this.initStatusUpdateButton = function() {
@@ -276,7 +278,7 @@ function AmbientController() {
 
     this.webSocketConnection.onclose = function(event) {
       _this.webSocketAvailable = false;
-      $('#ambiGrid-address').html(_this.httpServerAddress);
+      $('#ambiGrid-address').html('disconnected');
       console.log('Disconnected from WebSocket.');
     };
 
@@ -294,48 +296,11 @@ function AmbientController() {
 
   this.apiRequest = function(messageDictionary, $button) {
     if (!this.webSocketAvailable) {
-      this.httpRequestFallback(messageDictionary);
+      this.initWebSocket();
     }
 
     var message = JSON.stringify(messageDictionary);
     this.webSocketConnection.send(message);
-  };
-
-  // ********** HTTP fallback ****************************************
-
-  this.httpRequestFallback = function(messageDictionary) {
-    console.log('HTTP fallback not yet imnplemented - sorry bro!');
-    var uri = this.httpApiAddress + 'status';
-    this.ajaxApiRequest(uri);
-  };
-
-  this.ajaxApiRequest = function(uri) {
-    $.ajax({
-      url: this.prepareUriForRequest(uri),
-      dataType: 'jsonp',
-      success: function(json) {
-        _this.processAmbiGridStatus(json);
-      },
-
-      error: function(jqxhr, textStatus, error) {
-        var err = textStatus + ', ' + error;
-        console.log('request failed: ' + err);
-      },
-    });
-  };
-
-  this.prepareUriForRequest = function(uri) {
-    if (uri.slice(-1) != '/') {
-      uri = uri + '/';
-    }
-
-    // add the request ID we got from the server with the last response
-    if (this.nextRequestID > 0) {
-      this.nextRequestID = this.nextRequestID + 1;
-      uri = uri + 'requestID/' + this.nextRequestID + '/';
-    }
-
-    return uri;
   };
 
   // ********** helper ****************************************
