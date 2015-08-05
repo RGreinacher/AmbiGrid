@@ -2,26 +2,25 @@
 # -*- coding: utf-8 -*-
 
 # import python libs
+import datetime
 import serial
+import sys
+import os
 from threading import Thread, Timer
 from array import array
 from time import sleep
 from sys import stdout
-import sys
-import os
 
 # import project libs
 from colorCalculator import ColorCalculator
 
 # defining constants
-DEVICE_FILE = '/dev/tty.usbmodem141311'
-# DEVICE_FILE = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_741333535373514081C0-if00'
+DEVICE_FILE = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_741333535373514081C0-if00'
 DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 49
 NUMBER_LED_ROWS = 7
-TARGET_FPS = 67
+DRY_RUN = False
 DRY_RUN = True
-# DRY_RUN = False
 
 
 
@@ -32,8 +31,9 @@ class DeviceController:
         self.beVerbose = verbose
         self.colorCalculator = ColorCalculator()
         self.deviceConnected = False
-        self.countUpdatesBuffer = 0
-        self.writeBufferSleepOffset = 0
+        self.currentFrameCount = 0
+        self.targetTimePerFrame = 0.0
+        self.updateFrameTimestamp = datetime.datetime.now()
         self.asyncUpdateRateController = AsyncUpdateRateController(
             self, showUpdates)
         self.pixelMap = [
@@ -72,7 +72,11 @@ class DeviceController:
         self.buffer.append((NUMBER_LEDS - 1) >> 8 ^ (NUMBER_LEDS - 1) & 0xff ^ 0x55)
         for _ in range(0, (NUMBER_LEDS * 3)):
             # fill up every channel of every LED with zeros
-            self.buffer.append(0)
+            self.buffer.append(255)
+
+        # calculate max. useful frame rate which the serial bus can handle
+        targetFPS = (DEVICE_BAUDRATE / 8) / sys.getsizeof(self.buffer)
+        self.targetTimePerFrame = 1.0 / targetFPS
 
         # wait for initialization
         if self.beVerbose:
@@ -82,7 +86,7 @@ class DeviceController:
         self.asyncUpdateRateController.start()
 
     # ***** controller handling **********************************
-    def writeBuffer(self, calculationTimeForFrame=0):
+    def writeBuffer(self):
         if self.deviceConnected:
             # write to serial port
             if not DRY_RUN:
@@ -97,25 +101,24 @@ class DeviceController:
                     self.closeConnection()
                     exit()
 
-                # auto correct sleep time to reach target FPS
-                calculatedSleepTime = (
-                    1 / TARGET_FPS) - (calculationTimeForFrame / 1000000)
-                if self.asyncUpdateRateController.currentFramesPerSecond < TARGET_FPS:
-                    self.writeBufferSleepOffset = self.writeBufferSleepOffset + \
-                        0.000002
-                elif self.asyncUpdateRateController.currentFramesPerSecond > TARGET_FPS:
-                    self.writeBufferSleepOffset = self.writeBufferSleepOffset - \
-                        0.000002
+            # increment counter for FPS calculation
+            self.currentFrameCount = self.currentFrameCount + 1
 
-                if calculatedSleepTime > self.writeBufferSleepOffset:
-                    sleep(calculatedSleepTime - self.writeBufferSleepOffset)
-                else:
-                    self.writeBufferSleepOffset = 0
-                    if calculatedSleepTime > 0:
-                        sleep(calculatedSleepTime)
+            # limit the frame rate to what the serial connection is capable of
+            self.frameRateLimiter()
 
-                # increment counter for FPS calculation
-                self.countUpdatesBuffer = self.countUpdatesBuffer + 1
+    def frameRateLimiter(self):
+        # measure current time
+        currentTimestamp = datetime.datetime.now()
+        updateFrameTimeDelta = currentTimestamp - self.updateFrameTimestamp
+        self.updateFrameTimestamp = datetime.datetime.now()
+        frameCalculationTime = updateFrameTimeDelta.microseconds / 1000000
+
+        if frameCalculationTime > self.targetTimePerFrame:
+            return
+
+        compensateTime = self.targetTimePerFrame - frameCalculationTime
+        sleep(compensateTime)
 
     def closeConnection(self):
         self.deviceConnected = False
@@ -133,10 +136,7 @@ class DeviceController:
         return NUMBER_LEDS
 
     def getCurrentFps(self):
-        if DRY_RUN:
-            return TARGET_FPS
-        else:
-            return self.asyncUpdateRateController.currentFramesPerSecond
+        return self.asyncUpdateRateController.currentFPS
 
     def getRgbFromBufferWithIndex(self, index):
         bufferIndex = 6 + (index * 3)
@@ -181,7 +181,7 @@ class AsyncUpdateRateController(Thread):
     def __init__(self, deviceController, showUpdates):
         self.device = deviceController
         self.showUpdates = showUpdates
-        self.currentFramesPerSecond = TARGET_FPS
+        self.currentFPS = 0
         self.printUpdateRateTimer = None
 
         # inital method calls
@@ -194,11 +194,11 @@ class AsyncUpdateRateController(Thread):
         if self.device.deviceConnected:  # and self.device.printUpdateRate:
             if self.showUpdates:
                 stdout.write(
-                    "\r" + 'update rate: ' + str(self.device.countUpdatesBuffer) + ' updates/sec ')
+                    "\r" + 'update rate: ' + str(self.device.currentFrameCount) + ' updates/sec ')
                 stdout.flush()
-            self.currentFramesPerSecond = self.device.countUpdatesBuffer
-            self.device.countUpdatesBuffer = 0
+            self.currentFPS = self.device.currentFrameCount
+            self.device.currentFrameCount = 0
 
-        # keep the timer alive and able to cancel
+        # keep the timer alive
         self.printUpdateRateTimer = Timer(1, self.__timerTickPrintUpdateRate)
         self.printUpdateRateTimer.start()
