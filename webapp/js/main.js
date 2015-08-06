@@ -20,6 +20,7 @@ function AmbientController() {
     // init noUiSlider
     this.sliders = document.getElementsByClassName('sliders');
     this.setupNoUiColorSlider();
+    this.setupNoUiAnimationSlider();
     this.setupNoUiTimePicker();
 
     // init every other interaction
@@ -28,13 +29,13 @@ function AmbientController() {
     this.initFadeOutMechanics();
     this.initSetAnimationButtons();
 
-    // init web socket connection
-    this.initWebSocket();
-
-    // ask for the current AmbiGrid state
-    setTimeout(function() {
-      _this.updateStatusWithDetails();
-    }, 500);
+    // // init web socket connection
+    // this.initWebSocket();
+    //
+    // // ask for the current AmbiGrid state
+    // setTimeout(function() {
+    //   _this.updateStatusWithDetails();
+    // }, 500);
   };
 
   this.initStatusUpdateButton = function() {
@@ -68,7 +69,7 @@ function AmbientController() {
       event.preventDefault();
       var timeToFadeOut = _this.sliders[6].noUiSlider.get();
       var message = {action: 'setFadeOut', seconds: parseInt(timeToFadeOut)};
-      console.log(message);
+
       _this.apiRequest(message);
     });
 
@@ -82,25 +83,43 @@ function AmbientController() {
   };
 
   this.initSetAnimationButtons = function() {
-    $('.ambiGrid-set-animation-mono').click({
-      animationName: 'monoColor',
-    }, this.setAnimationHandler);
+    $('.ambiGrid-set-animation-mono').click(function(event) {
+      event.preventDefault();
+      var message = {action: 'setAnimation', name: 'monoColor'};
+      _this.apiRequest(message);
+    });
 
-    $('.ambiGrid-set-animation-pulsing-circle').click({
-      animationName: 'pulsingCircle',
-    }, this.setAnimationHandler);
+    $('.ambiGrid-set-animation-pulsing-circle').click(function(event) {
+      event.preventDefault();
+      var pulsingCircleSlider = document.getElementsByClassName(
+        'animation-pulsing-circle-slider');
+      var message = {
+        action: 'setAnimation',
+        name: 'monoColor',
+        size: pulsingCircleSlider[0].noUiSlider.get(),
+        speed: pulsingCircleSlider[1].noUiSlider.get(),
+        oscillation: pulsingCircleSlider[2].noUiSlider.get(),
+        posX: pulsingCircleSlider[3].noUiSlider.get(),
+        posY: pulsingCircleSlider[4].noUiSlider.get(),
+      };
 
-    $('.ambiGrid-set-animation-random-glow').click({
-      animationName: 'randomGlow',
-    }, this.setAnimationHandler);
+      _this.apiRequest(message);
+    });
 
-    $('.ambiGrid-set-animation-binary-clock').click({
-      animationName: 'binaryClock',
-    }, this.setAnimationHandler);
+    $('.ambiGrid-set-animation-random-glow').click(function(event) {
+      event.preventDefault();
+      var randomGlowSlider = document.getElementsByClassName(
+        'animation-random-glow-slider');
+      var message = {
+        action: 'setAnimation',
+        name: 'randomGlow',
+        pixelCount: parseInt(randomGlowSlider[0].noUiSlider.get()),
+        speed: randomGlowSlider[1].noUiSlider.get(),
+        oscillation: randomGlowSlider[2].noUiSlider.get(),
+      };
 
-    $('.ambiGrid-set-animation-clock-circle').click({
-      animationName: 'binaryClockWithPulsingCircle',
-    }, this.setAnimationHandler);
+      _this.apiRequest(message);
+    });
 
   };
 
@@ -131,6 +150,19 @@ function AmbientController() {
       // remember that the sliding has stopped
       this.sliders[i].noUiSlider.on('change', function() {
         _this.colorSliderState = false;
+      });
+    }
+  };
+
+  this.setupNoUiAnimationSlider = function() {
+    var animationSlider = document.getElementsByClassName(
+      'animation-slider');
+    var upperBoundaries = [10, 100, 180, 7, 7, 49, 100, 180];
+    for (var i = 0; i < 8; i++) {
+      noUiSlider.create(animationSlider[i], {
+        start: upperBoundaries[i] / 2,
+        connect: 'lower',
+        range: { min: 0, max: upperBoundaries[i] },
       });
     }
   };

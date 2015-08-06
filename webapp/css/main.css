@@ -109,6 +109,10 @@ footer {
 
 /* Animation */
 
+.slider-label {
+  display: inline-block;
+}
+
 #fade-out-time-picker {
 }
 

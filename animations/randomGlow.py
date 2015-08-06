@@ -25,6 +25,9 @@ class RandomGlowAnimation:
         self.randomGlowingPixels = {}
         self.sinFactorForHueAddition = 0
 
+    def setAttributes(self, attributes): # TODO
+        print('SETTING ATTRIBUTES NOT IMPLEMENTED FOR RANDOM GLOW')
+
     def start(self):
         # precalculate factor needed for every iteration
         self.sinFactorForHueAddition = (

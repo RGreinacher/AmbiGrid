@@ -7,13 +7,14 @@ import math
 # import project libs
 from colorCalculator import ColorCalculator
 from colorController import ColorController
+from issetHelper import IssetHelper
 
 # defining constants
 MAX_INT = 2147483647
 
 
 
-class PulsingCircleAnimation:
+class PulsingCircleAnimation(IssetHelper):
 
     def __init__(self, device):
         # animation settings
@@ -37,6 +38,9 @@ class PulsingCircleAnimation:
                 0.0 for x in range(self.device.getNumberOfLeds())
             ] for x in range(self.device.getNumberOfLeds())
         ]
+
+    def setAttributes(self, attributes):
+        print('SETTING ATTRIBUTES NOT IMPLEMENTED FOR PULSING CIRCLE')
 
     def start(self):
         # precalculated values

@@ -70,19 +70,12 @@ class LightAnimation(Thread):
                     self.fadeOutAnimation.renderNextFrame()
                 if self.showMonoColor:
                     self.monoColor.renderNextFrame()
-                    self.currentAnimation = 'mono color'
                 if self.showMonoPixel:
                     self.monoPixel.renderNextFrame()
-                    self.currentAnimation = 'mono pixel'
                 if self.showRandomGlow:
                     self.randomGlowAnimation.renderNextFrame()
-                    self.currentAnimation = 'random glow'
                 if self.showPulsingCircle:
                     self.pulsingCircleAnimation.renderNextFrame()
-                    self.currentAnimation = 'pulsing circle'
-                if self.showBinaryClock:
-                    self.binaryClockAnimation.renderNextFrame()
-                    self.currentAnimation = 'binary clock'
 
                 # apply buffer to AmbiGrid
                 self.device.writeBuffer()
@@ -192,21 +185,22 @@ class LightAnimation(Thread):
     def unsetWebSocketHandler(self, wsHandler):
         self.webSocketHandler.remove(wsHandler)
 
-    def showAnimation(self, animation):
-        if animation == 'monoColor':
-            setterTuple = (True, False, False, False)
-        elif animation == 'randomGlow':
-            setterTuple = (False, True, False, False)
-        elif animation == 'pulsingCircle':
-            setterTuple = (False, False, True, False)
-        elif animation == 'binaryClock':
-            setterTuple = (False, False, False, True)
-        elif animation == 'binaryClockWithPulsingCircle':
-            setterTuple = (False, False, True, True)
+    def unsetAnimation(self):
+        self.showMonoColor = False
+        self.showRandomGlow = False
+        self.showPulsingCircle = False
 
-        (self.showMonoColor,
-        self.showRandomGlow,
-        self.showPulsingCircle,
-        self.showBinaryClock) = setterTuple
+    def showAnimation(self, attributes):
+        self.unsetAnimation()
+
+        if attributes['name'] == 'monoColor':
+            self.showMonoColor = True
+        elif attributes['name'] == 'pulsingCircle':
+            self.showPulsingCircle = True
+            self.pulsingCircleAnimation.setAttributes(attributes)
+        elif attributes['name'] == 'randomGlow':
+            self.showRandomGlow = True
+            self.randomGlowAnimation.setAttributes(attributes)
 
         self.prepareAnimations()
+        self.currentAnimation = attributes['name']
