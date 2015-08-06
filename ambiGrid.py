@@ -31,7 +31,7 @@ def startAnimationControllerThread():
     lightAnimation.start()
 
     if startHttpServerForWebapp:
-        httpServer = AmbiGridHttpServer(beVerbose)
+        httpServer = AmbiGridHttpServer(webSocketsPort, beVerbose)
         httpServer.start()
 
     if useWebSocketsApi:
