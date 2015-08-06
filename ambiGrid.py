@@ -15,12 +15,14 @@ import argparse
 # import project libs
 from animationController import LightAnimation
 from networkInterface import AmbiGridNetworking
+from webappServer import AmbiGridHttpServer
 
 # defining variable
 beVerbose = False
 showFPS = False
-useWebSocketsApi = False
+useWebSocketsApi = True
 webSocketsPort = 4445
+startHttpServerForWebapp = True
 
 
 
@@ -28,20 +30,22 @@ def startAnimationControllerThread():
     lightAnimation = LightAnimation(beVerbose, showFPS)
     lightAnimation.start()
 
-    if useWebSocketsApi:
-        AmbiGridNetworking(webSocketsPort, lightAnimation, beVerbose)
+    if startHttpServerForWebapp:
+        httpServer = AmbiGridHttpServer(beVerbose)
+        httpServer.start()
 
+    if useWebSocketsApi:
+        wsApi = AmbiGridNetworking(webSocketsPort, lightAnimation, beVerbose)
 
 # check if this code is run as a module or was included into another project
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Controller program for Arduino powerd RGB-LED strand")
     parser.add_argument(
-        "-api",
-        "--server",
+        "--no-api",
         action="store_true",
-        dest="http",
-        help="enables the HTTP API")
+        dest="websockets",
+        help="doesn't start the web socket API")
     parser.add_argument(
         "-p",
         "--port",
@@ -64,19 +68,26 @@ if __name__ == "__main__":
         "--updates",
         action="store_true",
         dest="updates", help="display USB update rate per second")
+    parser.add_argument(
+        "--no-http",
+        action="store_true",
+        dest="http", help="doesn't start the HTTP server for the webapp")
     args = parser.parse_args()
 
-    if args.http:
-        useWebSocketsApi = True
+    if args.websockets:
+        useWebSocketsApi = False
 
     if args.port:
-        net_port = args.port
+        webSocketsPort = args.port
 
     if args.verbose:
         beVerbose = True
 
     if args.updates:
         showFPS = True
+
+    if args.http:
+        startHttpServerForWebapp = False
 
     if args.daemon:
         pidFile = "/tmp/sleepServerDaemon.pid"

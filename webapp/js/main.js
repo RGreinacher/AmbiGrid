@@ -6,12 +6,11 @@ function AmbientController() {
 
   var _this = this;
   var serverIP = '172.20.3.17';
+  var serverIP = '127.0.0.1';
   var httpPort = 4444;
   var wsPort = 4445;
 
   this.wsServerAddress = 'ws://' + serverIP + ':' + wsPort;
-  this.httpServerAddress = 'http://' + serverIP + ':' + httpPort + '/';
-  this.httpApiAddress = this.httpServerAddress + 'ambiGridApi/';
   this.webSocketConnection;
   this.webSocketAvailable = false;
 
@@ -22,8 +21,6 @@ function AmbientController() {
   // ********** init elements ****************************************
 
   this.init = function() {
-    $('#ambiGrid-address').html(this.httpServerAddress);
-
     // init noUiSlider
     this.sliders = document.getElementsByClassName('sliders');
     this.setupNoUiColorSlider();
