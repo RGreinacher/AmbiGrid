@@ -25,9 +25,11 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
 
     def onConnect(self, request):
         if self.beVerbose: print('\nClient connecting: {}'.format(request.peer))
+        self.animationController.setWebSocketHandler(self)
 
     def onClose(self, wasClean, code, reason):
         if self.beVerbose: print('\nWebSocket connection closed: {}'.format(reason))
+        self.animationController.unsetWebSocketHandler(self)
 
     def onMessage(self, payload, isBinary):
         if isBinary:
@@ -42,7 +44,10 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
         except ValueError:
             response = self.statusRequest()
 
-        responsAsJsonString = json.dumps(response, ensure_ascii=False)
+        self.sendDictionary(response)
+
+    def sendDictionary(self, dictionary):
+        responsAsJsonString = json.dumps(dictionary, ensure_ascii=False)
         self.sendMessage(responsAsJsonString.encode('utf8'))
 
     def setReferences(self, bridge, animationController, verbose):

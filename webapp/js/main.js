@@ -5,10 +5,6 @@ function AmbientController() {
   /*global console */
 
   var _this = this;
-  var serverIP = '172.20.3.17';
-  var serverIP = '127.0.0.1';
-  var httpPort = 4444;
-  var wsPort = 4445;
 
   this.wsServerAddress = 'ws://' + serverIP + ':' + wsPort;
   this.webSocketConnection;
@@ -206,56 +202,66 @@ function AmbientController() {
     this.apiRequest(message);
   };
 
-  this.processAmbiGridStatus = function(json) {
-    this.updateStatusInformationText(json);
-    this.updateSliderPositions(json);
+  // ********** processing routines ****************************************
 
+  this.processAmbiGridStatus = function(json) {
+    if (json.update == 'all' || json.update == 'details') {
+      this.updateStatusDetails(json);
+    }
+
+    if (json.update == 'all' || json.update == 'status') {
+      this.updateStatusInformationText(json);
+      this.updateSliderPositions(json);
+      this.updateColors(json);
+    }
+  };
+
+  this.updateStatusDetails = function(json) {
+    if (('currentLightness' in json) && ('currentFPS' in json)) {
+      $('#ambiGrid-lightness').html(
+        Number((json.currentLightness * 100).toFixed(2)) + '%'
+      );
+      $('#ambiGrid-frame-rate').html(json.currentFPS);
+    }
+  };
+
+  this.updateStatusInformationText = function(json) {
+    if ('fadeOutIn' in json) {
+      $('#ambiGrid-status').html(json.status + ' (fading out)');
+      $('#ambiGrid-time-to-fade-out').html(json.fadeOutIn / 60);
+      this.sliders[6].noUiSlider.set(
+        parseInt(json.fadeOutIn / 60)
+      );
+    } else {
+      $('#ambiGrid-status').html(json.status);
+      $('#ambiGrid-time-to-fade-out').html('-');
+    }
+  };
+
+  this.updateSliderPositions = function(json) {
+    // set HSL slider if those are currently not in use
+    if (!this.colorSliderState || this.colorSliderState == 'rgb') {
+      this.sliders[0].noUiSlider.set(json.baseColorHue);
+      this.sliders[1].noUiSlider.set(json.baseColorSaturation);
+      this.sliders[2].noUiSlider.set(json.baseColorLightness);
+    }
+
+    // set RGB slider if those are currently not in use
+    if (!this.colorSliderState || this.colorSliderState == 'hsl') {
+      this.sliders[3].noUiSlider.set(json.baseColorRed);
+      this.sliders[4].noUiSlider.set(json.baseColorGreen);
+      this.sliders[5].noUiSlider.set(json.baseColorBlue);
+    }
+
+    $('#ambiGrid-base-color-hex').val(json.baseHexColor);
+  };
+
+  this.updateColors = function(json) {
     // set back the color information to the UI as preview
     var sliderBackgrnd = 'rgba(0, 0, 0, ' + (1 - json.baseColorLightness) + ')';
     $('#lightness').css('background-color', sliderBackgrnd);
     $('#hue').css('background-color', json.baseHexColor);
     $('.jumbotron').css('background-color', json.baseHexColor);
-  };
-
-  this.updateStatusInformationText = function(statusJson) {
-    if ('fadeOutIn' in statusJson) {
-      $('#ambiGrid-status').html(statusJson.status + ' (fading out)');
-      $('#ambiGrid-time-to-fade-out').html(statusJson.fadeOutIn / 60);
-      this.sliders[6].noUiSlider.set(
-        parseInt(statusJson.fadeOutIn / 60)
-      );
-    } else {
-      $('#ambiGrid-status').html(statusJson.status);
-      $('#ambiGrid-time-to-fade-out').html('-');
-    }
-
-    if ('currentLightness' in statusJson && 'currentFPS' in statusJson) {
-      $('#ambiGrid-lightness').html(
-        Number((statusJson.currentLightness * 100).toFixed(2)) + '%'
-      );
-      $('#ambiGrid-frame-rate').html(statusJson.currentFPS);
-    } else {
-      $('#ambiGrid-lightness').html('?');
-      $('#ambiGrid-frame-rate').html('?');
-    }
-  };
-
-  this.updateSliderPositions = function(statusJson) {
-    // set HSL slider if those are currently not in use
-    if (!this.colorSliderState || this.colorSliderState == 'rgb') {
-      this.sliders[0].noUiSlider.set(statusJson.baseColorHue);
-      this.sliders[1].noUiSlider.set(statusJson.baseColorSaturation);
-      this.sliders[2].noUiSlider.set(statusJson.baseColorLightness);
-    }
-
-    // set RGB slider if those are currently not in use
-    if (!this.colorSliderState || this.colorSliderState == 'hsl') {
-      this.sliders[3].noUiSlider.set(statusJson.baseColorRed);
-      this.sliders[4].noUiSlider.set(statusJson.baseColorGreen);
-      this.sliders[5].noUiSlider.set(statusJson.baseColorBlue);
-    }
-
-    $('#ambiGrid-base-color-hex').val(statusJson.baseHexColor);
   };
 
   // ********** Networking ****************************************

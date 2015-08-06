@@ -31,11 +31,11 @@ def startAnimationControllerThread():
     lightAnimation.start()
 
     if startHttpServerForWebapp:
-        httpServer = AmbiGridHttpServer(beVerbose)
+        httpServer = AmbiGridHttpServer(webSocketsPort, beVerbose)
         httpServer.start()
 
     if useWebSocketsApi:
-        wsApi = AmbiGridNetworking(webSocketsPort, lightAnimation, beVerbose)
+        AmbiGridNetworking(webSocketsPort, lightAnimation, beVerbose)
 
 # check if this code is run as a module or was included into another project
 if __name__ == "__main__":
