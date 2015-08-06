@@ -126,13 +126,18 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
 
 
 
-class AmbiGridNetworking(IssetHelper):
+class AmbiGridNetworking():
 
     def __init__(self, wsPort, lightAnimationController, verbose = False):
+        # initializations
+        self.port = wsPort
+        self.animationController = lightAnimationController
+        self.beVerbose = verbose
+
         # prepare the web socket protocol
         webSocketProtocol = WebSocketProtocol
         webSocketProtocol.setReferences(
-            webSocketProtocol, self, lightAnimationController, verbose)
+            webSocketProtocol, self, self.animationController, self.beVerbose)
 
         # prepare the web sockets
         factory = WebSocketServerFactory()
@@ -141,14 +146,13 @@ class AmbiGridNetworking(IssetHelper):
         # start the server event loop
         host = socket.gethostbyname(socket.gethostname())
         loop = asyncio.get_event_loop()
-        coro = loop.create_server(factory, host, wsPort)
+        coro = loop.create_server(factory, host, self.port)
         wsServer = loop.run_until_complete(coro)
 
         try:
-            if verbose:
-                serverAddressString = host + ':' + str(wsPort)
-                print('AmbiGrid web socket sever is up and running at',
-                    serverAddressString)
+            if self.beVerbose:
+                serverAddressString = host + ':' + str(self.port)
+                print('WS sever: launched at', serverAddressString)
             loop.run_forever()
         except KeyboardInterrupt:
             pass
