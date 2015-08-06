@@ -14,6 +14,9 @@ class IssetHelper:
             return True
 
     def isInt(self, integerValue, base=10):
+        if isinstance(integerValue, int):
+            return True
+
         try:
             int(integerValue, base)
         except (ValueError, TypeError):
@@ -22,6 +25,9 @@ class IssetHelper:
             return True
 
     def isFloat(self, floatingValue):
+        if isinstance(floatingValue, float):
+            return True
+
         try:
             float(floatingValue)
         except (ValueError, TypeError):
@@ -38,7 +44,9 @@ class IssetHelper:
             return True
 
     def saveIntConvert(self, integerValue, base=10):
-        if self.isInt(integerValue, base):
+        if isinstance(integerValue, int):
+            return integerValue
+        elif self.isInt(integerValue, base):
             return int(integerValue, base)
         else:
             return -1

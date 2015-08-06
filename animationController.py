@@ -112,7 +112,7 @@ class LightAnimation(Thread):
 
     def stopAnimation(self, animationObj):
         # stop showing fadeOut-animation
-        if type(animationObj) == type(self.fadeOutAnimation):
+        if isinstance(animationObj, FadeOutAnimation):
             self.showFadeOut = False
 
     def autoUpdateStatusDetails(self):
@@ -173,6 +173,10 @@ class LightAnimation(Thread):
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
         statusDictionary['update'] = 'details'
+
+        secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
+        if secondsToFadeOut >= 0:
+            statusDictionary['fadeOutIn'] = secondsToFadeOut
 
         return statusDictionary
 

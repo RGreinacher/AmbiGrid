@@ -67,8 +67,8 @@ function AmbientController() {
     $('.ambiGrid-set-fade-out').click(function(event) {
       event.preventDefault();
       var timeToFadeOut = _this.sliders[6].noUiSlider.get();
-      var message = {action: 'setFadeOut', seconds: (timeToFadeOut * 60)};
-
+      var message = {action: 'setFadeOut', seconds: parseInt(timeToFadeOut)};
+      console.log(message);
       _this.apiRequest(message);
     });
 
@@ -214,6 +214,8 @@ function AmbientController() {
       this.updateSliderPositions(json);
       this.updateColors(json);
     }
+
+    this.updateFadeOutTime(json);
   };
 
   this.updateStatusDetails = function(json) {
@@ -228,13 +230,19 @@ function AmbientController() {
   this.updateStatusInformationText = function(json) {
     if ('fadeOutIn' in json) {
       $('#ambiGrid-status').html(json.status + ' (fading out)');
-      $('#ambiGrid-time-to-fade-out').html(json.fadeOutIn / 60);
-      this.sliders[6].noUiSlider.set(
-        parseInt(json.fadeOutIn / 60)
-      );
     } else {
       $('#ambiGrid-status').html(json.status);
       $('#ambiGrid-time-to-fade-out').html('-');
+    }
+  };
+
+  this.updateFadeOutTime = function(json) {
+    if ('fadeOutIn' in json) {
+      var timeString = this.secondsToTimeString(json.fadeOutIn);
+      $('#ambiGrid-time-to-fade-out').html(timeString);
+      this.sliders[6].noUiSlider.set(
+        parseInt(json.fadeOutIn)
+      );
     }
   };
 
@@ -272,6 +280,7 @@ function AmbientController() {
     this.webSocketConnection.onopen = function(event) {
       _this.webSocketAvailable = true;
       $('#ambiGrid-address').html(_this.wsServerAddress);
+      $('.ambiGrid-update-status').css('display', 'none');
       console.log('opened connection to: ' + event.currentTarget.URL);
     };
 
@@ -282,6 +291,7 @@ function AmbientController() {
     this.webSocketConnection.onclose = function(event) {
       _this.webSocketAvailable = false;
       $('#ambiGrid-address').html('disconnected');
+      $('.ambiGrid-update-status').css('display', 'inline-block');
       console.log('Disconnected from WebSocket.');
     };
 
