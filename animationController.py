@@ -22,7 +22,7 @@ from monoPixel import MonoPixel
 from fadeOut import FadeOutAnimation
 
 # constants
-AUTO_STATUS_UPDATE_RATE = 5 # updates per second
+AUTO_STATUS_UPDATE_RATE = 1 # updates per second
 
 
 class LightAnimation(Thread):
@@ -125,7 +125,7 @@ class LightAnimation(Thread):
         self.autoUpdateTreshold = int(framesPerUpdate)
 
         if len(self.webSocketHandler) > 0:
-            currentStatus = self.getStatusWithDetails()
+            currentStatus = self.getOnlyStatusDetails()
             for wsHandler in self.webSocketHandler:
                 wsHandler.sendDictionary(currentStatus)
 
@@ -151,7 +151,8 @@ class LightAnimation(Thread):
             'baseColorBlue': blueChannel,
             'baseColorHue': hue,
             'baseColorSaturation': saturation,
-            'baseColorLightness': lightness
+            'baseColorLightness': lightness,
+            'update': 'status'
         }
 
         if secondsToFadeOut >= 0:
@@ -163,6 +164,7 @@ class LightAnimation(Thread):
         statusDictionary = self.getStatus()
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
+        statusDictionary['update'] = 'all'
 
         return statusDictionary
 
@@ -170,6 +172,7 @@ class LightAnimation(Thread):
         statusDictionary = {}
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
+        statusDictionary['update'] = 'details'
 
         return statusDictionary
 
