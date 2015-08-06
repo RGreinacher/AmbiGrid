@@ -13,7 +13,7 @@ from threading import Thread
 from ambiGridController import DeviceController
 from colorController import ColorController
 
-#import animations
+# import animations
 from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
 from binaryClock import BinaryClockAnimation
@@ -21,6 +21,8 @@ from monoColor import MonoColor
 from monoPixel import MonoPixel
 from fadeOut import FadeOutAnimation
 
+# constants
+AUTO_STATUS_UPDATE_RATE = 5 # updates per second
 
 
 class LightAnimation(Thread):
@@ -29,9 +31,12 @@ class LightAnimation(Thread):
         # initializations
         self.beVerbose = beVerbose
         self.device = DeviceController(beVerbose, showFPS)
+        self.webSocketHandler = []
         self.colors = ColorController
         self.colors.setDeviceReference(self.device)
         self.currentAnimation = ''
+        self.autoStatusCounter = 0
+        self.autoUpdateTreshold = 10
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
@@ -82,6 +87,9 @@ class LightAnimation(Thread):
                 # apply buffer to AmbiGrid
                 self.device.writeBuffer()
 
+                # update status at connected clients
+                self.autoUpdateStatusDetails()
+
         except (KeyboardInterrupt):
             print('\nreceived KeyboardInterrupt; closing connection')
             self.device.closeConnection()
@@ -107,7 +115,19 @@ class LightAnimation(Thread):
         if type(animationObj) == type(self.fadeOutAnimation):
             self.showFadeOut = False
 
+    def autoUpdateStatusDetails(self):
+        if self.autoStatusCounter < self.autoUpdateTreshold:
+            self.autoStatusCounter = self.autoStatusCounter + 1
+            return
 
+        self.autoStatusCounter = 0
+        framesPerUpdate = self.device.getCurrentFps() / AUTO_STATUS_UPDATE_RATE
+        self.autoUpdateTreshold = int(framesPerUpdate)
+
+        if len(self.webSocketHandler) > 0:
+            currentStatus = self.getStatusWithDetails()
+            for wsHandler in self.webSocketHandler:
+                wsHandler.sendDictionary(currentStatus)
 
     # ***** animation control **********************************
     def stopFadeOut(self):
@@ -141,7 +161,13 @@ class LightAnimation(Thread):
 
     def getStatusWithDetails(self):
         statusDictionary = self.getStatus()
+        statusDictionary['currentLightness'] = self.colors.getTotalLightness()
+        statusDictionary['currentFPS'] = self.device.getCurrentFps()
 
+        return statusDictionary
+
+    def getOnlyStatusDetails(self):
+        statusDictionary = {}
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
 
@@ -152,6 +178,12 @@ class LightAnimation(Thread):
         self.fadeOutAnimation.secondsToFadeOut = seconds
         self.showFadeOut = True
         self.fadeOutAnimation.start()
+
+    def setWebSocketHandler(self, wsHandler):
+        self.webSocketHandler.append(wsHandler)
+
+    def unsetWebSocketHandler(self, wsHandler):
+        self.webSocketHandler.remove(wsHandler)
 
     def showAnimation(self, animation):
         if animation == 'monoColor':
