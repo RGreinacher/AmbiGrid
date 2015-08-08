@@ -29,13 +29,13 @@ function AmbientController() {
     this.initFadeOutMechanics();
     this.initSetAnimationButtons();
 
-    // // init web socket connection
-    // this.initWebSocket();
-    //
-    // // ask for the current AmbiGrid state
-    // setTimeout(function() {
-    //   _this.updateStatusWithDetails();
-    // }, 500);
+    // init web socket connection
+    this.initWebSocket();
+
+    // ask for the current AmbiGrid state
+    setTimeout(function() {
+      _this.updateStatusWithDetails();
+    }, 500);
   };
 
   this.initStatusUpdateButton = function() {
@@ -95,7 +95,7 @@ function AmbientController() {
         'animation-pulsing-circle-slider');
       var message = {
         action: 'setAnimation',
-        name: 'monoColor',
+        name: 'pulsingCircle',
         size: pulsingCircleSlider[0].noUiSlider.get(),
         speed: pulsingCircleSlider[1].noUiSlider.get(),
         oscillation: pulsingCircleSlider[2].noUiSlider.get(),
@@ -154,10 +154,11 @@ function AmbientController() {
     }
   };
 
+  // TODO: live update per slider
   this.setupNoUiAnimationSlider = function() {
     var animationSlider = document.getElementsByClassName(
       'animation-slider');
-    var upperBoundaries = [10, 100, 180, 7, 7, 49, 100, 180];
+    var upperBoundaries = [7, 0.05, 120, 6, 6, 49, 100, 180];
     for (var i = 0; i < 8; i++) {
       noUiSlider.create(animationSlider[i], {
         start: upperBoundaries[i] / 2,
@@ -247,6 +248,10 @@ function AmbientController() {
       this.updateColors(json);
     }
 
+    if (json.update == 'all') {
+      this.updateAnimationSliderPositions(json);
+    }
+
     this.updateFadeOutTime(json);
   };
 
@@ -302,6 +307,23 @@ function AmbientController() {
     $('#lightness').css('background-color', sliderBackgrnd);
     $('#hue').css('background-color', json.baseHexColor);
     $('.jumbotron').css('background-color', json.baseHexColor);
+  };
+
+  this.updateAnimationSliderPositions = function(json) {
+    if ('animations' in json) {
+      var animations = json.animations;
+      if ('pulsingCircle' in animations && 'randomGlow' in animations) {
+        var animationSlider = document.getElementsByClassName(
+          'animation-slider');
+        var pulsingCircle = animations.pulsingCircle;
+        var randomGlow = animations.randomGlow;
+        animationSlider[0].noUiSlider.set(pulsingCircle.size);
+        animationSlider[1].noUiSlider.set(pulsingCircle.speed);
+        animationSlider[2].noUiSlider.set(pulsingCircle.oscillation);
+        animationSlider[3].noUiSlider.set(pulsingCircle.posY);
+        animationSlider[4].noUiSlider.set(pulsingCircle.posX);
+      }
+    }
   };
 
   // ********** Networking ****************************************

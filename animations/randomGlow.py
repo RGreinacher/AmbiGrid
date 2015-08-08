@@ -25,9 +25,6 @@ class RandomGlowAnimation:
         self.randomGlowingPixels = {}
         self.sinFactorForHueAddition = 0
 
-    def setAttributes(self, attributes): # TODO
-        print('SETTING ATTRIBUTES NOT IMPLEMENTED FOR RANDOM GLOW')
-
     def start(self):
         # precalculate factor needed for every iteration
         self.sinFactorForHueAddition = (
@@ -48,7 +45,7 @@ class RandomGlowAnimation:
                 # calculate new hue and lightness for current frame
                 (hueAddition, lightnessFactor) = self.getColorForIteration(
                     glowingPixel['xAxisPosition'], glowingPixel['speedFactor'])
-                targetHue = self.animationController.basisHue + hueAddition
+                targetHue = self.colors.basisHue + hueAddition
                 targetLightness = self.colors.basisLightness * lightnessFactor
 
                 # apply new hue and lightness to frame-buffer
@@ -91,3 +88,13 @@ class RandomGlowAnimation:
             except (TypeError):
                 return False
         return False
+
+    # ***** getter **********************************
+
+    def getAttributes(self):
+        return {}
+
+    # ***** setter **********************************
+
+    def setAttributes(self, attributes): # TODO
+        print('SETTING ATTRIBUTES NOT IMPLEMENTED FOR RANDOM GLOW')

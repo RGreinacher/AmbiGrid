@@ -16,13 +16,12 @@ from colorController import ColorController
 # import animations
 from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
-from binaryClock import BinaryClockAnimation
 from monoColor import MonoColor
 from monoPixel import MonoPixel
 from fadeOut import FadeOutAnimation
 
 # constants
-AUTO_STATUS_UPDATE_RATE = 1 # updates per second
+AUTO_STATUS_UPDATE_RATE = 5 # updates per second
 
 
 class LightAnimation(Thread):
@@ -42,21 +41,18 @@ class LightAnimation(Thread):
         self.fadeOutAnimation = FadeOutAnimation(self)
         self.monoColor = MonoColor(self.device)
         self.monoPixel = MonoPixel(self.device)
-        self.randomGlowAnimation = RandomGlowAnimation(self)
+        self.randomGlowAnimation = RandomGlowAnimation(self.device)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self.device)
-        self.binaryClockAnimation = BinaryClockAnimation(
-            self.device, self.beVerbose)
 
         # set animation mode
         self.showFadeOut = False
         self.showMonoColor = False
         self.showMonoPixel = False
         self.showRandomGlow = False
-        self.showPulsingCircle = True
-        self.showBinaryClock = False
+        self.showPulsingCircle = False
 
-        # start timers of the selected animations
-        self.prepareAnimations()
+        # start the pulsing circle animation
+        self.showAnimation({'name': 'pulsingCircle'})
 
         # instantiate as thread
         Thread.__init__(self)
@@ -96,13 +92,6 @@ class LightAnimation(Thread):
         if self.showPulsingCircle:
             self.pulsingCircleAnimation.start()
 
-        # prepare binary clock buffer
-        if self.showBinaryClock:
-            self.binaryClockAnimation.start(
-                self.showRandomGlow or self.showPulsingCircle)
-        else:
-            self.binaryClockAnimation.stop()
-
     def stopAnimation(self, animationObj):
         # stop showing fadeOut-animation
         if isinstance(animationObj, FadeOutAnimation):
@@ -118,7 +107,7 @@ class LightAnimation(Thread):
         self.autoUpdateTreshold = int(framesPerUpdate)
 
         if len(self.webSocketHandler) > 0:
-            currentStatus = self.getOnlyStatusDetails()
+            currentStatus = self.getStatusDetails()
             for wsHandler in self.webSocketHandler:
                 wsHandler.sendDictionary(currentStatus)
 
@@ -127,7 +116,7 @@ class LightAnimation(Thread):
         self.showFadeOut = False
         return self.getStatus()
 
-    # ***** getters **********************************
+    # ***** getter **********************************
     def getDevice(self):
         return self.device
 
@@ -153,15 +142,19 @@ class LightAnimation(Thread):
 
         return statusDictionary
 
-    def getStatusWithDetails(self):
+    def getAllStati(self):
         statusDictionary = self.getStatus()
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
+        statusDictionary['animations'] = {
+            'pulsingCircle': self.pulsingCircleAnimation.getAttributes(),
+            'randomGlow': self.randomGlowAnimation.getAttributes()
+        }
         statusDictionary['update'] = 'all'
 
         return statusDictionary
 
-    def getOnlyStatusDetails(self):
+    def getStatusDetails(self):
         statusDictionary = {}
         statusDictionary['currentLightness'] = self.colors.getTotalLightness()
         statusDictionary['currentFPS'] = self.device.getCurrentFps()
@@ -189,12 +182,16 @@ class LightAnimation(Thread):
         self.showMonoColor = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
+        self.showFadeOut = False
+        self.showMonoPixel = False
 
     def showAnimation(self, attributes):
         self.unsetAnimation()
 
         if attributes['name'] == 'monoColor':
             self.showMonoColor = True
+        if attributes['name'] == 'monoPixel':
+            self.showMonoPixel = True
         elif attributes['name'] == 'pulsingCircle':
             self.showPulsingCircle = True
             self.pulsingCircleAnimation.setAttributes(attributes)

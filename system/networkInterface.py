@@ -75,7 +75,7 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
     def statusRequest(self, requestData = None):
         if (self.isset(requestData, 'details') and
                 requestData['details'] == True):
-            return self.animationController.getStatusWithDetails()
+            return self.animationController.getAllStati()
         else:
             return self.animationController.getStatus()
 
