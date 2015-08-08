@@ -83,24 +83,54 @@
 
       <!-- Animations -->
       <div class="row well">
-        <div class="col-md-9">
-          <h3>Light shows</h3>
-          <p>Choose one animations for the AmbiGrid to perform</p>
+        <div class="col-md-3">
+          <h3>Mono Color</h3>
           <p>
+            Every pixel shows the same color
             <a class="btn btn-default ambiGrid-set-animation-mono" href="#" role="button">
-              Mono Color
+              Apply
             </a>
+          </p>
+        </div>
+
+        <div class="col-md-3">
+          <h3>Pulsing Circle</h3>
+          <p>Meditative pulsing moving picture</p>
+          <div id="pulsing-circle-slider-group">
+          	<span class="slider-label">Size:</span>
+            <div class="sliders animation-slider animation-pulsing-circle-slider" id="animation-pulsing-circle-size"></div>
+            <span class="slider-label">Speed:</span>
+            <div class="sliders animation-slider animation-pulsing-circle-slider" id="animation-pulsing-circle-speed"></div>
+            <span class="slider-label">Oscillation:</span>
+            <div class="sliders animation-slider animation-pulsing-circle-slider" id="animation-pulsing-circle-oscillation"></div>
+            <span class="slider-label">Center position Y:</span>
+            <div class="sliders animation-slider animation-pulsing-circle-slider" id="animation-pulsing-circle-pos-y"></div>
+            <span class="slider-label">Center position X:</span>
+            <div class="sliders animation-slider animation-pulsing-circle-slider" id="animation-pulsing-circle-pos-x"></div>
+          </div>
+
+          <p>
             <a class="btn btn-default ambiGrid-set-animation-pulsing-circle" href="#" role="button">
-              Pulsing Circle
+              Apply
             </a>
+          </p>
+        </div>
+
+        <div class="col-md-3">
+          <h3>Random Glow</h3>
+          <p>Meditative random pixel glow</p>
+          <div id="random-glow-slider-group">
+          	<span class="slider-label">Simultan pixels:</span>
+            <div class="sliders animation-slider animation-random-glow-slider" id="animation-random-glow-count"></div>
+            <span class="slider-label">Speed:</span>
+            <div class="sliders animation-slider animation-random-glow-slider" id="animation-random-glow-speed"></div>
+            <span class="slider-label">Oscillation:</span>
+            <div class="sliders animation-slider animation-random-glow-slider" id="animation-random-glow-oscillation"></div>
+          </div>
+
+          <p>
             <a class="btn btn-default ambiGrid-set-animation-random-glow" href="#" role="button">
-              Random Glow
-            </a>
-            <a class="btn btn-default ambiGrid-set-animation-binary-clock" href="#" role="button">
-              Binary Clock
-            </a>
-            <a class="btn btn-default ambiGrid-set-animation-clock-circle" href="#" role="button">
-              Binary Clock &amp; Pulsing Circle
+              Apply
             </a>
           </p>
         </div>

@@ -75,13 +75,13 @@ class WebSocketProtocol(WebSocketServerProtocol, IssetHelper):
     def statusRequest(self, requestData = None):
         if (self.isset(requestData, 'details') and
                 requestData['details'] == True):
-            return self.animationController.getStatusWithDetails()
+            return self.animationController.getAllStati()
         else:
             return self.animationController.getStatus()
 
     def setAnimationRequest(self, requestData):
-        animationName = requestData['name']
-        self.animationController.showAnimation(animationName)
+        if self.isset(requestData, 'name'):
+            self.animationController.showAnimation(requestData)
 
     def setFadeOutRequest(self, requestData):
         time = self.saveIntConvert(requestData['seconds'])

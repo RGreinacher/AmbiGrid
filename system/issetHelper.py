@@ -51,6 +51,14 @@ class IssetHelper:
         else:
             return -1
 
+    def saveFloatConvert(self, floatValue):
+        if isinstance(floatValue, float):
+            return floatValue
+        elif self.isFloat(floatValue):
+            return float(floatValue)
+        else:
+            return -1.0
+
     # return a positive (and > 0) integer
     # (the one that comes next in the array) or -1
     def getIntAfterToken(self, array, token, distanceToToken=1):

@@ -8,15 +8,17 @@ import random
 # import project libs
 from colorCalculator import ColorCalculator
 from colorController import ColorController
+from issetHelper import IssetHelper
 
 
 
-class RandomGlowAnimation:
+class RandomGlowAnimation(IssetHelper):
 
     def __init__(self, device):
         # animation settings
         self.glowingPixelCount = 17
         self.glowingPixelDegreeOfColorDivergence = 35
+        self.minimumSpeed = 50
 
         # initializations
         self.colorCalculator = ColorCalculator()
@@ -45,7 +47,7 @@ class RandomGlowAnimation:
                 # calculate new hue and lightness for current frame
                 (hueAddition, lightnessFactor) = self.getColorForIteration(
                     glowingPixel['xAxisPosition'], glowingPixel['speedFactor'])
-                targetHue = self.animationController.basisHue + hueAddition
+                targetHue = self.colors.basisHue + hueAddition
                 targetLightness = self.colors.basisLightness * lightnessFactor
 
                 # apply new hue and lightness to frame-buffer
@@ -71,9 +73,13 @@ class RandomGlowAnimation:
             # self.device.setRgbColorToBufferForLedWithIndex(self.colors.getBasisColorAsRgb(), randomIndex)
 
             # instantiate new pixel values for iterative color calculation
-            return {'index': randomIndex,
-                    'xAxisPosition': 0,
-                    'speedFactor': random.randint(50, 300)}
+            speedFactor = random.randint(
+                self.minimumSpeed, self.minimumSpeed * 6)
+            return {
+                'index': randomIndex,
+                'xAxisPosition': 0,
+                'speedFactor': speedFactor
+            }
         else:
             return self.initializeRandomPixel()
 
@@ -88,3 +94,35 @@ class RandomGlowAnimation:
             except (TypeError):
                 return False
         return False
+
+    # ***** getter **********************************
+
+    def getAttributes(self):
+        return {
+            'pixelCount': self.glowingPixelCount,
+            'speed': self.minimumSpeed,
+            'oscillation': self.glowingPixelDegreeOfColorDivergence
+        }
+
+    # ***** setter **********************************
+
+    def setAttributes(self, attributes):
+        recalculationRequired = False
+
+        if self.isset(attributes, 'pixelCount'):
+            pixelCount = self.saveIntConvert(attributes['pixelCount'])
+            if pixelCount > 0:
+                self.glowingPixelCount = pixelCount
+                recalculationRequired = True
+        if self.isset(attributes, 'speed'):
+            speed = self.saveIntConvert(attributes['speed'])
+            if speed >= 0:
+                self.minimumSpeed = speed
+        if self.isset(attributes, 'oscillation'):
+            oscillation = self.saveIntConvert(attributes['oscillation'])
+            if oscillation >= 0 and oscillation <= 360:
+                self.glowingPixelDegreeOfColorDivergence = oscillation
+                recalculationRequired = True
+
+        if recalculationRequired:
+            self.start()

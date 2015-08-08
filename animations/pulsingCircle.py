@@ -7,13 +7,14 @@ import math
 # import project libs
 from colorCalculator import ColorCalculator
 from colorController import ColorController
+from issetHelper import IssetHelper
 
 # defining constants
 MAX_INT = 2147483647
 
 
 
-class PulsingCircleAnimation:
+class PulsingCircleAnimation(IssetHelper):
 
     def __init__(self, device):
         # animation settings
@@ -21,14 +22,13 @@ class PulsingCircleAnimation:
         self.centerPositionY = 5
         self.degreeOfColorDivergence = 30
         self.distanceToDarkness = 3
-        self.speed = 100
+        self.speed = 0.01
         self.iterationStep = 0
 
         # initializations
         self.colorCalculator = ColorCalculator()
         self.colors = ColorController
         self.device = device
-        self.speedFactor = 0
         self.degreeFactor = 0
 
         # construct array of precalculated values
@@ -40,7 +40,6 @@ class PulsingCircleAnimation:
 
     def start(self):
         # precalculated values
-        self.speedFactor = 1 / self.speed
         self.degreeFactor = ((self.degreeOfColorDivergence / 360) / 2)
 
         # calculate values for each pixel position
@@ -72,10 +71,54 @@ class PulsingCircleAnimation:
                 self.device.setRgbColorToBufferForLedWithCoordinates(
                     r, g, b, x, y)
 
+    # ***** getter **********************************
+
     def getColorForCoordinates(self, x, y):
         intensity = math.sin(
-            self.sinSummands[x][y] - (self.iterationStep * self.speedFactor))
+            self.sinSummands[x][y] - (self.iterationStep * self.speed))
 
         newHue = intensity * self.degreeFactor
         newLightness = (intensity * 0.5) + 0.5
         return (newHue, newLightness)
+
+    def getAttributes(self):
+        return {
+            'size': self.distanceToDarkness,
+            'speed': self.speed,
+            'oscillation': self.degreeOfColorDivergence,
+            'posX': self.centerPositionX,
+            'posY': self.centerPositionY
+        }
+
+    # ***** setter **********************************
+
+    def setAttributes(self, attributes):
+        recalculationRequired = False
+
+        if self.isset(attributes, 'size'):
+            size = self.saveFloatConvert(attributes['size'])
+            if size > 0:
+                self.distanceToDarkness = size
+                recalculationRequired = True
+        if self.isset(attributes, 'speed'):
+            speed = self.saveFloatConvert(attributes['speed'])
+            if speed >= 0:
+                self.speed = speed
+        if self.isset(attributes, 'oscillation'):
+            oscillation = self.saveIntConvert(attributes['oscillation'])
+            if oscillation >= 0 and oscillation <= 360:
+                self.degreeOfColorDivergence = oscillation
+                recalculationRequired = True
+        if self.isset(attributes, 'posX'):
+            posX = self.saveFloatConvert(attributes['posX'])
+            if posX >= 0 and posX <= 6:
+                self.centerPositionX = posX
+                recalculationRequired = True
+        if self.isset(attributes, 'posY'):
+            posY = self.saveFloatConvert(attributes['posY'])
+            if posY >= 0 and posY <= 6:
+                self.centerPositionY = posY
+                recalculationRequired = True
+
+        if recalculationRequired:
+            self.start()
