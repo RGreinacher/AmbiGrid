@@ -19,8 +19,6 @@ DEVICE_FILE = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7413335353735
 DEVICE_BAUDRATE = 115200
 NUMBER_LEDS = 49
 NUMBER_LED_ROWS = 7
-DRY_RUN = False
-DRY_RUN = True
 
 
 
@@ -29,6 +27,7 @@ class DeviceController:
     def __init__(self, verbose, showUpdates):
         # initializations
         self.beVerbose = verbose
+        self.dryRun = False
         self.colorCalculator = ColorCalculator()
         self.deviceConnected = False
         self.currentFrameCount = 0
@@ -44,16 +43,13 @@ class DeviceController:
 
         # establish connection to device
         try:
-            if not DRY_RUN:
+            if not self.dryRun:
                 self.serialConnection = serial.Serial(
                     DEVICE_FILE, DEVICE_BAUDRATE)
             self.deviceConnected = True
         except serial.SerialException:
-            exc_type, _, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print('\n', exc_type, fname, exc_tb.tb_lineno,
-                  '\ncan not establish a serial connection to the dev')
-            exit()
+            print('can not connect to the Arduino; going on as dry run')
+            self.dryRun = True
 
         # build header for buffer
         # unsigned char array, will transfered serially to the device
@@ -79,17 +75,19 @@ class DeviceController:
         self.targetTimePerFrame = 1.0 / targetFPS
 
         # wait for initialization
-        if self.beVerbose:
-            print('wait for Arduino to be initialized')
-        if not DRY_RUN:
+        if not self.dryRun:
+            if self.beVerbose:
+                print('wait for Arduino to be initialized')
             sleep(5)
+
+        # start frame rate controller
         self.asyncUpdateRateController.start()
 
     # ***** controller handling **********************************
     def writeBuffer(self):
         if self.deviceConnected:
             # write to serial port
-            if not DRY_RUN:
+            if not self.dryRun:
                 try:
                     self.serialConnection.flushOutput()
                     self.serialConnection.write(bytearray(self.buffer))
@@ -122,7 +120,7 @@ class DeviceController:
 
     def closeConnection(self):
         self.deviceConnected = False
-        if not DRY_RUN:
+        if not self.dryRun:
             self.serialConnection.close()
         if self.beVerbose:
             print('serial connection closed')
