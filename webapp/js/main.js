@@ -67,7 +67,8 @@ function AmbientController() {
     // event handler for start fade-out button
     $('.ambiGrid-set-fade-out').click(function(event) {
       event.preventDefault();
-      var timeToFadeOut = _this.sliders[6].noUiSlider.get();
+      var fadeOutTimeSlider = document.getElementById('fade-out-time');
+      var timeToFadeOut = fadeOutTimeSlider.noUiSlider.get();
       var message = {action: 'setFadeOut', seconds: parseInt(timeToFadeOut)};
 
       _this.apiRequest(message);
@@ -91,34 +92,12 @@ function AmbientController() {
 
     $('.ambiGrid-set-animation-pulsing-circle').click(function(event) {
       event.preventDefault();
-      var pulsingCircleSlider = document.getElementsByClassName(
-        'animation-pulsing-circle-slider');
-      var message = {
-        action: 'setAnimation',
-        name: 'pulsingCircle',
-        size: pulsingCircleSlider[0].noUiSlider.get(),
-        speed: pulsingCircleSlider[1].noUiSlider.get(),
-        oscillation: pulsingCircleSlider[2].noUiSlider.get(),
-        posX: pulsingCircleSlider[3].noUiSlider.get(),
-        posY: pulsingCircleSlider[4].noUiSlider.get(),
-      };
-
-      _this.apiRequest(message);
+      _this.setPulsingCircleAnimationAttributes();
     });
 
     $('.ambiGrid-set-animation-random-glow').click(function(event) {
       event.preventDefault();
-      var randomGlowSlider = document.getElementsByClassName(
-        'animation-random-glow-slider');
-      var message = {
-        action: 'setAnimation',
-        name: 'randomGlow',
-        pixelCount: parseInt(randomGlowSlider[0].noUiSlider.get()),
-        speed: randomGlowSlider[1].noUiSlider.get(),
-        oscillation: randomGlowSlider[2].noUiSlider.get(),
-      };
-
-      _this.apiRequest(message);
+      _this.setRandomGlowAnimationAttributes();
     });
 
   };
@@ -154,17 +133,24 @@ function AmbientController() {
     }
   };
 
-  // TODO: live update per slider
   this.setupNoUiAnimationSlider = function() {
     var animationSlider = document.getElementsByClassName(
       'animation-slider');
-    var upperBoundaries = [7, 0.05, 120, 6, 6, 49, 100, 180];
+    var upperBoundaries = [7, 0.05, 120, 6, 6, 49, 300, 120];
     for (var i = 0; i < 8; i++) {
       noUiSlider.create(animationSlider[i], {
         start: upperBoundaries[i] / 2,
         connect: 'lower',
         range: { min: 0, max: upperBoundaries[i] },
       });
+
+      if ($(animationSlider[i]).hasClass('animation-pulsing-circle-slider')) {
+        animationSlider[i].noUiSlider.on(
+          'slide', this.setPulsingCircleAnimationAttributes);
+      } else {
+        animationSlider[i].noUiSlider.on(
+          'slide', this.setRandomGlowAnimationAttributes);
+      }
     }
   };
 
@@ -217,6 +203,36 @@ function AmbientController() {
   this.setAnimationHandler = function(event) {
     event.preventDefault();
     var message = {action: 'setAnimation', name: event.data.animationName};
+
+    _this.apiRequest(message);
+  };
+
+  this.setPulsingCircleAnimationAttributes = function() {
+    var pulsingCircleSlider = document.getElementsByClassName(
+      'animation-pulsing-circle-slider');
+    var message = {
+      action: 'setAnimation',
+      name: 'pulsingCircle',
+      size: pulsingCircleSlider[0].noUiSlider.get(),
+      speed: pulsingCircleSlider[1].noUiSlider.get(),
+      oscillation: pulsingCircleSlider[2].noUiSlider.get(),
+      posX: pulsingCircleSlider[3].noUiSlider.get(),
+      posY: pulsingCircleSlider[4].noUiSlider.get(),
+    };
+
+    _this.apiRequest(message);
+  };
+
+  this.setRandomGlowAnimationAttributes = function() {
+    var randomGlowSlider = document.getElementsByClassName(
+      'animation-random-glow-slider');
+    var message = {
+      action: 'setAnimation',
+      name: 'randomGlow',
+      pixelCount: parseInt(randomGlowSlider[0].noUiSlider.get()),
+      speed: randomGlowSlider[1].noUiSlider.get(),
+      oscillation: randomGlowSlider[2].noUiSlider.get(),
+    };
 
     _this.apiRequest(message);
   };
@@ -276,9 +292,9 @@ function AmbientController() {
   this.updateFadeOutTime = function(json) {
     if ('fadeOutIn' in json) {
       var timeString = this.secondsToTimeString(json.fadeOutIn);
+      var slider = document.getElementById('fade-out-time');
       $('#ambiGrid-time-to-fade-out').html(timeString);
-      this.sliders[6].noUiSlider.set(
-        parseInt(json.fadeOutIn)
+      slider.noUiSlider.set(parseInt(json.fadeOutIn)
       );
     }
   };
@@ -317,11 +333,18 @@ function AmbientController() {
           'animation-slider');
         var pulsingCircle = animations.pulsingCircle;
         var randomGlow = animations.randomGlow;
+
+        // pulsing circle slider
         animationSlider[0].noUiSlider.set(pulsingCircle.size);
         animationSlider[1].noUiSlider.set(pulsingCircle.speed);
         animationSlider[2].noUiSlider.set(pulsingCircle.oscillation);
         animationSlider[3].noUiSlider.set(pulsingCircle.posY);
         animationSlider[4].noUiSlider.set(pulsingCircle.posX);
+
+        // random glow slider
+        animationSlider[5].noUiSlider.set(randomGlow.pixelCount);
+        animationSlider[6].noUiSlider.set(randomGlow.speed);
+        animationSlider[7].noUiSlider.set(randomGlow.oscillation);
       }
     }
   };

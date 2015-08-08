@@ -121,7 +121,6 @@ class LightAnimation(Thread):
         return self.device
 
     def getStatus(self):
-        secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
         hue, saturation, lightness = self.colors.getBasisColorAsHsl()
         redChannel, greenChannel, blueChannel = self.colors.getBasisColorAsRgb()
 
@@ -137,6 +136,7 @@ class LightAnimation(Thread):
             'update': 'status'
         }
 
+        secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
         if secondsToFadeOut >= 0:
             statusDictionary['fadeOutIn'] = secondsToFadeOut
 
@@ -182,7 +182,6 @@ class LightAnimation(Thread):
         self.showMonoColor = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
-        self.showFadeOut = False
         self.showMonoPixel = False
 
     def showAnimation(self, attributes):
@@ -190,7 +189,7 @@ class LightAnimation(Thread):
 
         if attributes['name'] == 'monoColor':
             self.showMonoColor = True
-        if attributes['name'] == 'monoPixel':
+        elif attributes['name'] == 'monoPixel':
             self.showMonoPixel = True
         elif attributes['name'] == 'pulsingCircle':
             self.showPulsingCircle = True
