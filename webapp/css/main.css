@@ -113,6 +113,17 @@ footer {
   display: inline-block;
 }
 
+.animation-slider {
+  display: block;
+  margin: 0 0 10px;
+  background: #777777;
+}
+
+.apply-animation-button {
+  margin-top: 10px;
+  float: right;
+}
+
 #fade-out-time-picker {
 }
 

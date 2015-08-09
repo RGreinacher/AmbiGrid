@@ -10,6 +10,9 @@ from colorCalculator import ColorCalculator
 from colorController import ColorController
 from issetHelper import IssetHelper
 
+# constants
+SPEED_MULTIPLICATOR = 2
+
 
 
 class RandomGlowAnimation(IssetHelper):
@@ -74,7 +77,7 @@ class RandomGlowAnimation(IssetHelper):
 
             # instantiate new pixel values for iterative color calculation
             speedFactor = random.randint(
-                self.minimumSpeed, self.minimumSpeed * 6)
+                self.minimumSpeed, self.minimumSpeed * SPEED_MULTIPLICATOR)
             return {
                 'index': randomIndex,
                 'xAxisPosition': 0,

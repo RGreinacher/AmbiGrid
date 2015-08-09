@@ -48,6 +48,8 @@ class IssetHelper:
             return integerValue
         elif self.isInt(integerValue, base):
             return int(integerValue, base)
+        elif self.isFloat(integerValue):
+            return int(float(integerValue))
         else:
             return -1
 

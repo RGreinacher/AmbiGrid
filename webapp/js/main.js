@@ -5,6 +5,8 @@ function AmbientController() {
   /*global console */
 
   var _this = this;
+  var serverIP = '172.20.0.12'
+  var wsPort = 4445
 
   this.wsServerAddress = 'ws://' + serverIP + ':' + wsPort;
   this.webSocketConnection;
@@ -136,10 +138,12 @@ function AmbientController() {
   this.setupNoUiAnimationSlider = function() {
     var animationSlider = document.getElementsByClassName(
       'animation-slider');
-    var upperBoundaries = [7, 0.05, 120, 6, 6, 49, 300, 120];
+    var upperBoundaries = [8, 12, 120, 6, 6, 49, 300, 120];
+    var steps = [0, 0, 1, 1, 1, 1, 0, 0];
     for (var i = 0; i < 8; i++) {
       noUiSlider.create(animationSlider[i], {
         start: upperBoundaries[i] / 2,
+        step: steps[i],
         connect: 'lower',
         range: { min: 0, max: upperBoundaries[i] },
       });
@@ -214,10 +218,10 @@ function AmbientController() {
       action: 'setAnimation',
       name: 'pulsingCircle',
       size: pulsingCircleSlider[0].noUiSlider.get(),
-      speed: pulsingCircleSlider[1].noUiSlider.get(),
+      speed: (pulsingCircleSlider[1].noUiSlider.get() / 100),
       oscillation: pulsingCircleSlider[2].noUiSlider.get(),
-      posX: pulsingCircleSlider[3].noUiSlider.get(),
-      posY: pulsingCircleSlider[4].noUiSlider.get(),
+      posX: pulsingCircleSlider[4].noUiSlider.get(),
+      posY: pulsingCircleSlider[3].noUiSlider.get(),
     };
 
     _this.apiRequest(message);
@@ -336,7 +340,7 @@ function AmbientController() {
 
         // pulsing circle slider
         animationSlider[0].noUiSlider.set(pulsingCircle.size);
-        animationSlider[1].noUiSlider.set(pulsingCircle.speed);
+        animationSlider[1].noUiSlider.set(pulsingCircle.speed * 100);
         animationSlider[2].noUiSlider.set(pulsingCircle.oscillation);
         animationSlider[3].noUiSlider.set(pulsingCircle.posY);
         animationSlider[4].noUiSlider.set(pulsingCircle.posX);
