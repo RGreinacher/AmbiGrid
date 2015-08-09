@@ -5,8 +5,6 @@ function AmbientController() {
   /*global console */
 
   var _this = this;
-  var serverIP = '172.20.0.12'
-  var wsPort = 4445
 
   this.wsServerAddress = 'ws://' + serverIP + ':' + wsPort;
   this.webSocketConnection;
