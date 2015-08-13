@@ -18,6 +18,7 @@ from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
 from monoColor import MonoColor
 from monoPixel import MonoPixel
+from colorChange import ColorChange
 from fadeOut import FadeOutAnimation
 
 # constants
@@ -39,8 +40,9 @@ class LightAnimation(Thread):
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
-        self.monoColor = MonoColor(self.device)
-        self.monoPixel = MonoPixel(self.device)
+        self.monoColorAnimation = MonoColor(self.device)
+        self.monoPixelAnimation = MonoPixel(self.device)
+        self.colorChangeAnimation = ColorChange(self.device)
         self.randomGlowAnimation = RandomGlowAnimation(self.device)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self.device)
 
@@ -48,11 +50,13 @@ class LightAnimation(Thread):
         self.showFadeOut = False
         self.showMonoColor = False
         self.showMonoPixel = False
+        self.showColorChange = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
 
         # start the pulsing circle animation
-        self.showAnimation({'name': 'pulsingCircle'})
+        # self.showAnimation({'name': 'pulsingCircle'})
+        self.showAnimation({'name': 'colorChange'})
 
         # instantiate as thread
         Thread.__init__(self)
@@ -65,9 +69,11 @@ class LightAnimation(Thread):
                 if self.showFadeOut:
                     self.fadeOutAnimation.renderNextFrame()
                 if self.showMonoColor:
-                    self.monoColor.renderNextFrame()
+                    self.monoColorAnimation.renderNextFrame()
                 if self.showMonoPixel:
-                    self.monoPixel.renderNextFrame()
+                    self.monoPixelAnimation.renderNextFrame()
+                if self.showColorChange:
+                    self.colorChangeAnimation.renderNextFrame()
                 if self.showRandomGlow:
                     self.randomGlowAnimation.renderNextFrame()
                 if self.showPulsingCircle:
@@ -84,6 +90,10 @@ class LightAnimation(Thread):
             self.device.closeConnection()
 
     def prepareAnimations(self):
+        # prepare color change
+        if self.showColorChange:
+            self.colorChangeAnimation.start()
+
         # prepare random glow
         if self.showRandomGlow:
             self.randomGlowAnimation.start()
@@ -180,6 +190,7 @@ class LightAnimation(Thread):
 
     def unsetAnimation(self):
         self.showMonoColor = False
+        self.showColorChange = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
         self.showMonoPixel = False
@@ -191,6 +202,8 @@ class LightAnimation(Thread):
             self.showMonoColor = True
         elif attributes['name'] == 'monoPixel':
             self.showMonoPixel = True
+        elif attributes['name'] == 'colorChange':
+            self.showColorChange = True
         elif attributes['name'] == 'pulsingCircle':
             self.showPulsingCircle = True
             self.pulsingCircleAnimation.setAttributes(attributes)
