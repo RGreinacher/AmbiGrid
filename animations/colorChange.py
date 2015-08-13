@@ -5,9 +5,6 @@
 from colorCalculator import ColorCalculator
 from colorController import ColorController
 
-# defining constants
-HUE_CAHNGE_STEPS = 3600
-
 
 
 class ColorChange:
@@ -21,10 +18,10 @@ class ColorChange:
 
         # animation settings
         self.currentHueAddition = 0.0
-        self.speed = 50
+        self.speed = 10
 
     def start(self):
-        self.hueAdditionPerFrame = 1 / (HUE_CAHNGE_STEPS / self.speed)
+        self.hueAdditionPerFrame = 1 / (1010 - (10 * self.speed))
 
     def renderNextFrame(self):
         (currentHue, saturation, lightness) = self.colors.getBasisColorAsHsl()
