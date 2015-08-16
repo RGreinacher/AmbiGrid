@@ -99,11 +99,11 @@ class DeviceController:
                     self.closeConnection()
                     exit()
 
-            # increment counter for FPS calculation
-            self.currentFrameCount = self.currentFrameCount + 1
+        # increment counter for FPS calculation
+        self.currentFrameCount = self.currentFrameCount + 1
 
-            # limit the frame rate to what the serial connection is capable of
-            self.frameRateLimiter()
+        # limit the frame rate to what the serial connection is capable of
+        self.frameRateLimiter()
 
     def frameRateLimiter(self):
         # measure current time
@@ -191,13 +191,12 @@ class AsyncUpdateRateController(Thread):
         self.printUpdateRateTimer.start()
 
     def __timerTickPrintUpdateRate(self):
-        if self.device.deviceConnected:  # and self.device.printUpdateRate:
-            if self.showUpdates:
-                stdout.write(
-                    "\r" + 'update rate: ' + str(self.device.currentFrameCount) + ' updates/sec ')
-                stdout.flush()
-            self.currentFPS = self.device.currentFrameCount
-            self.device.currentFrameCount = 0
+        if self.showUpdates:
+            stdout.write(
+                "\r" + 'update rate: ' + str(self.device.currentFrameCount) + ' updates/sec ')
+            stdout.flush()
+        self.currentFPS = self.device.currentFrameCount
+        self.device.currentFrameCount = 0
 
         # keep the timer alive
         self.printUpdateRateTimer = Timer(1, self.__timerTickPrintUpdateRate)

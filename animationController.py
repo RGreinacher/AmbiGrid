@@ -37,6 +37,7 @@ class LightAnimation(Thread):
         self.currentAnimation = ''
         self.autoStatusCounter = 0
         self.autoUpdateTreshold = 10
+        self.sentAutoUpdates = 0
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
@@ -55,7 +56,6 @@ class LightAnimation(Thread):
         self.showPulsingCircle = False
 
         # start the pulsing circle animation
-        # self.showAnimation({'name': 'pulsingCircle'})
         self.showAnimation({'name': 'colorChange'})
 
         # instantiate as thread
@@ -117,7 +117,13 @@ class LightAnimation(Thread):
         self.autoUpdateTreshold = int(framesPerUpdate)
 
         if len(self.webSocketHandler) > 0:
-            currentStatus = self.getStatusDetails()
+            if self.sentAutoUpdates >= AUTO_STATUS_UPDATE_RATE:
+                self.sentAutoUpdates = 0
+                currentStatus = self.getAllStati()
+            else:
+                self.sentAutoUpdates = self.sentAutoUpdates + 1
+                currentStatus = self.getStatusDetails()
+
             for wsHandler in self.webSocketHandler:
                 wsHandler.sendDictionary(currentStatus)
 
@@ -154,9 +160,9 @@ class LightAnimation(Thread):
 
     def getAllStati(self):
         statusDictionary = self.getStatus()
-        statusDictionary['currentLightness'] = self.colors.getTotalLightness()
-        statusDictionary['currentFPS'] = self.device.getCurrentFps()
+        statusDictionary.update(self.getStatusDetails())
         statusDictionary['animations'] = {
+            'colorChange': self.colorChangeAnimation.getAttributes(),
             'pulsingCircle': self.pulsingCircleAnimation.getAttributes(),
             'randomGlow': self.randomGlowAnimation.getAttributes()
         }
@@ -165,10 +171,11 @@ class LightAnimation(Thread):
         return statusDictionary
 
     def getStatusDetails(self):
-        statusDictionary = {}
-        statusDictionary['currentLightness'] = self.colors.getTotalLightness()
-        statusDictionary['currentFPS'] = self.device.getCurrentFps()
-        statusDictionary['update'] = 'details'
+        statusDictionary = {
+            'currentLightness': self.colors.getTotalLightness(),
+            'currentFPS': self.device.getCurrentFps(),
+            'update': 'details'
+        }
 
         secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
         if secondsToFadeOut >= 0:

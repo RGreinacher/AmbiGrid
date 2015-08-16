@@ -23,8 +23,7 @@ class MonoPixel:
             self.reset()
 
         (r, g, b) = self.colors.getBasisColorAsRgb()
-        targetIndex = self.device.convertAlignedIndexToWiredIndex(
-            self.pixelIndex)
+        targetIndex = self.device.pixelMap[self.pixelIndex]
         self.device.setRgbColorToBufferForLedWithIndex(r, g, b, targetIndex)
         self.currentFrame = self.currentFrame + 1
 
