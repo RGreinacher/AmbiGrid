@@ -8,6 +8,9 @@ from os.path import basename
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 
+# import project libs
+import config
+
 # constants
 WEBAPP_PATH = 'webapp'
 PORT_BIND_RETRIES = 10 # exit if binding 10 different ports fails
@@ -78,9 +81,14 @@ class AmbiGridHttpServer(Thread):
         # initializations
         self.verbose = verbose
         self.wsServerPort = str(wsPort)
-        self.host = socket.gethostbyname(socket.gethostname())
         self.ports = [80, 8080, 8000, 4444, 4446]
         self.currentSelectedPortIndex = -1
+
+        if config.AUTO_DETECT_HOST_IP:
+            self.host = socket.gethostbyname(socket.gethostname())
+        else:
+            self.host = config.HOST_IP
+
         Thread.__init__(self)
 
     def run(self):
