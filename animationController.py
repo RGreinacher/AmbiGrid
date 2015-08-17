@@ -18,6 +18,7 @@ from randomGlow import RandomGlowAnimation
 from pulsingCircle import PulsingCircleAnimation
 from monoColor import MonoColor
 from monoPixel import MonoPixel
+from colorChange import ColorChange
 from fadeOut import FadeOutAnimation
 
 # constants
@@ -36,11 +37,13 @@ class LightAnimation(Thread):
         self.currentAnimation = ''
         self.autoStatusCounter = 0
         self.autoUpdateTreshold = 10
+        self.sentAutoUpdates = 0
 
         # initialize animations
         self.fadeOutAnimation = FadeOutAnimation(self)
-        self.monoColor = MonoColor(self.device)
-        self.monoPixel = MonoPixel(self.device)
+        self.monoColorAnimation = MonoColor(self.device)
+        self.monoPixelAnimation = MonoPixel(self.device)
+        self.colorChangeAnimation = ColorChange(self.device)
         self.randomGlowAnimation = RandomGlowAnimation(self.device)
         self.pulsingCircleAnimation = PulsingCircleAnimation(self.device)
 
@@ -48,11 +51,12 @@ class LightAnimation(Thread):
         self.showFadeOut = False
         self.showMonoColor = False
         self.showMonoPixel = False
+        self.showColorChange = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
 
         # start the pulsing circle animation
-        self.showAnimation({'name': 'pulsingCircle'})
+        self.showAnimation({'name': 'colorChange'})
 
         # instantiate as thread
         Thread.__init__(self)
@@ -65,9 +69,11 @@ class LightAnimation(Thread):
                 if self.showFadeOut:
                     self.fadeOutAnimation.renderNextFrame()
                 if self.showMonoColor:
-                    self.monoColor.renderNextFrame()
+                    self.monoColorAnimation.renderNextFrame()
                 if self.showMonoPixel:
-                    self.monoPixel.renderNextFrame()
+                    self.monoPixelAnimation.renderNextFrame()
+                if self.showColorChange:
+                    self.colorChangeAnimation.renderNextFrame()
                 if self.showRandomGlow:
                     self.randomGlowAnimation.renderNextFrame()
                 if self.showPulsingCircle:
@@ -84,6 +90,10 @@ class LightAnimation(Thread):
             self.device.closeConnection()
 
     def prepareAnimations(self):
+        # prepare color change
+        if self.showColorChange:
+            self.colorChangeAnimation.start()
+
         # prepare random glow
         if self.showRandomGlow:
             self.randomGlowAnimation.start()
@@ -107,7 +117,13 @@ class LightAnimation(Thread):
         self.autoUpdateTreshold = int(framesPerUpdate)
 
         if len(self.webSocketHandler) > 0:
-            currentStatus = self.getStatusDetails()
+            if self.sentAutoUpdates >= AUTO_STATUS_UPDATE_RATE:
+                self.sentAutoUpdates = 0
+                currentStatus = self.getAllStati()
+            else:
+                self.sentAutoUpdates = self.sentAutoUpdates + 1
+                currentStatus = self.getStatusDetails()
+
             for wsHandler in self.webSocketHandler:
                 wsHandler.sendDictionary(currentStatus)
 
@@ -144,9 +160,9 @@ class LightAnimation(Thread):
 
     def getAllStati(self):
         statusDictionary = self.getStatus()
-        statusDictionary['currentLightness'] = self.colors.getTotalLightness()
-        statusDictionary['currentFPS'] = self.device.getCurrentFps()
+        statusDictionary.update(self.getStatusDetails())
         statusDictionary['animations'] = {
+            'colorChange': self.colorChangeAnimation.getAttributes(),
             'pulsingCircle': self.pulsingCircleAnimation.getAttributes(),
             'randomGlow': self.randomGlowAnimation.getAttributes()
         }
@@ -155,10 +171,11 @@ class LightAnimation(Thread):
         return statusDictionary
 
     def getStatusDetails(self):
-        statusDictionary = {}
-        statusDictionary['currentLightness'] = self.colors.getTotalLightness()
-        statusDictionary['currentFPS'] = self.device.getCurrentFps()
-        statusDictionary['update'] = 'details'
+        statusDictionary = {
+            'currentLightness': self.colors.getTotalLightness(),
+            'currentFPS': self.device.getCurrentFps(),
+            'update': 'details'
+        }
 
         secondsToFadeOut = self.fadeOutAnimation.getSecondsToFadeOut()
         if secondsToFadeOut >= 0:
@@ -180,6 +197,7 @@ class LightAnimation(Thread):
 
     def unsetAnimation(self):
         self.showMonoColor = False
+        self.showColorChange = False
         self.showRandomGlow = False
         self.showPulsingCircle = False
         self.showMonoPixel = False
@@ -191,6 +209,9 @@ class LightAnimation(Thread):
             self.showMonoColor = True
         elif attributes['name'] == 'monoPixel':
             self.showMonoPixel = True
+        elif attributes['name'] == 'colorChange':
+            self.showColorChange = True
+            self.colorChangeAnimation.setAttributes(attributes)
         elif attributes['name'] == 'pulsingCircle':
             self.showPulsingCircle = True
             self.pulsingCircleAnimation.setAttributes(attributes)

@@ -11,6 +11,7 @@ from autobahn.asyncio.websocket import WebSocketServerProtocol
 from autobahn.asyncio.websocket import WebSocketServerFactory
 
 # import project libs
+import config
 from issetHelper import IssetHelper
 from colorController import ColorController
 
@@ -148,8 +149,13 @@ class AmbiGridNetworking():
         factory = WebSocketServerFactory()
         factory.protocol = webSocketProtocol
 
+        # get the host's IP
+        if config.AUTO_DETECT_HOST_IP:
+            host = socket.gethostbyname(socket.gethostname())
+        else:
+            host = config.HOST_IP
+
         # start the server event loop
-        host = socket.gethostbyname(socket.gethostname())
         loop = asyncio.get_event_loop()
         coro = loop.create_server(factory, host, self.port)
         wsServer = loop.run_until_complete(coro)

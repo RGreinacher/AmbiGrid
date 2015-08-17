@@ -106,12 +106,7 @@ class ColorCalculator:
 
     # thanks to http://www.easyrgb.com/index.php?X=MATH
     def convertHueToRgb(self, lightness1, lightness2, hue):
-        if hue < 0 or hue > 1:
-            if hue < 0:
-                hue = hue + 1
-            elif hue > 1:
-                hue = hue - 1
-            return self.convertHueToRgb(lightness1, lightness2, hue)
+        hue = self.correctHueValue(hue)
 
         if (6 * hue) < 1:
             return lightness1 + ((lightness2 - lightness1) * 6 * hue)
@@ -120,6 +115,13 @@ class ColorCalculator:
         if (3 * hue) < 2:
             return lightness1 + ((lightness2 - lightness1) * ((2 / 3) - hue) * 6)
         return lightness1
+
+    def correctHueValue(self, hue):
+        if hue > 1:
+            return self.correctHueValue(hue - 1)
+        elif hue < 0:
+            return self.correctHueValue(hue + 1)
+        return hue
 
     def convertHexColorToHSL(self, hexColor):
         (redChannel, greenChannel, blueChannel) = self.convertHexColorToRgb(

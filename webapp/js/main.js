@@ -90,6 +90,18 @@ function AmbientController() {
       _this.apiRequest(message);
     });
 
+    $('.ambiGrid-set-animation-mono-pixel').click(function(event) {
+      event.preventDefault();
+      var message = {action: 'setAnimation', name: 'monoPixel'};
+      _this.apiRequest(message);
+    });
+
+    $('.ambiGrid-set-animation-color-change').click(function(event) {
+      event.preventDefault();
+      var message = {action: 'setAnimation', name: 'colorChange'};
+      _this.apiRequest(message);
+    });
+
     $('.ambiGrid-set-animation-pulsing-circle').click(function(event) {
       event.preventDefault();
       _this.setPulsingCircleAnimationAttributes();
@@ -136,9 +148,9 @@ function AmbientController() {
   this.setupNoUiAnimationSlider = function() {
     var animationSlider = document.getElementsByClassName(
       'animation-slider');
-    var upperBoundaries = [8, 12, 120, 6, 6, 49, 300, 120];
-    var steps = [0, 0, 1, 1, 1, 1, 0, 0];
-    for (var i = 0; i < 8; i++) {
+    var upperBoundaries = [100, 8, 12, 120, 6, 6, 49, 300, 120];
+    var steps = [1, 0, 0, 1, 1, 1, 1, 0, 0];
+    for (var i = 0; i < 9; i++) {
       noUiSlider.create(animationSlider[i], {
         start: upperBoundaries[i] / 2,
         step: steps[i],
@@ -146,7 +158,11 @@ function AmbientController() {
         range: { min: 0, max: upperBoundaries[i] },
       });
 
-      if ($(animationSlider[i]).hasClass('animation-pulsing-circle-slider')) {
+      if ($(animationSlider[i]).hasClass('animation-color-change-slider')) {
+        animationSlider[i].noUiSlider.on(
+          'slide', this.setColorChangeAnimationAttributes);
+      } else if ($(animationSlider[i]).hasClass(
+          'animation-pulsing-circle-slider')) {
         animationSlider[i].noUiSlider.on(
           'slide', this.setPulsingCircleAnimationAttributes);
       } else {
@@ -205,6 +221,18 @@ function AmbientController() {
   this.setAnimationHandler = function(event) {
     event.preventDefault();
     var message = {action: 'setAnimation', name: event.data.animationName};
+
+    _this.apiRequest(message);
+  };
+
+  this.setColorChangeAnimationAttributes = function() {
+    var colorChangeSlider = document.getElementsByClassName(
+      'animation-color-change-slider');
+    var message = {
+      action: 'setAnimation',
+      name: 'colorChange',
+      speed: parseInt(colorChangeSlider[0].noUiSlider.get()),
+    };
 
     _this.apiRequest(message);
   };
@@ -333,20 +361,24 @@ function AmbientController() {
       if ('pulsingCircle' in animations && 'randomGlow' in animations) {
         var animationSlider = document.getElementsByClassName(
           'animation-slider');
+        var colorChange = animations.colorChange;
         var pulsingCircle = animations.pulsingCircle;
         var randomGlow = animations.randomGlow;
 
+        // color change slider
+        animationSlider[0].noUiSlider.set(colorChange.speed);
+
         // pulsing circle slider
-        animationSlider[0].noUiSlider.set(pulsingCircle.size);
-        animationSlider[1].noUiSlider.set(pulsingCircle.speed * 100);
-        animationSlider[2].noUiSlider.set(pulsingCircle.oscillation);
-        animationSlider[3].noUiSlider.set(pulsingCircle.posY);
-        animationSlider[4].noUiSlider.set(pulsingCircle.posX);
+        animationSlider[1].noUiSlider.set(pulsingCircle.size);
+        animationSlider[2].noUiSlider.set(pulsingCircle.speed * 100);
+        animationSlider[3].noUiSlider.set(pulsingCircle.oscillation);
+        animationSlider[4].noUiSlider.set(pulsingCircle.posY);
+        animationSlider[5].noUiSlider.set(pulsingCircle.posX);
 
         // random glow slider
-        animationSlider[5].noUiSlider.set(randomGlow.pixelCount);
-        animationSlider[6].noUiSlider.set(randomGlow.speed);
-        animationSlider[7].noUiSlider.set(randomGlow.oscillation);
+        animationSlider[6].noUiSlider.set(randomGlow.pixelCount);
+        animationSlider[7].noUiSlider.set(randomGlow.speed);
+        animationSlider[8].noUiSlider.set(randomGlow.oscillation);
       }
     }
   };

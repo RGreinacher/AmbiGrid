@@ -1,0 +1,2 @@
+AUTO_DETECT_HOST_IP = False
+HOST_IP = '127.0.0.1'
