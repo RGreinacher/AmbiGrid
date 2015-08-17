@@ -193,7 +193,11 @@ class LightAnimation(Thread):
         self.webSocketHandler.append(wsHandler)
 
     def unsetWebSocketHandler(self, wsHandler):
-        self.webSocketHandler.remove(wsHandler)
+        try:
+            self.webSocketHandler.remove(wsHandler)
+        except ValueError:
+            if self.verbose:
+                print('failed to unset web socket handler; not registered')
 
     def unsetAnimation(self):
         self.showMonoColor = False
