@@ -158,7 +158,7 @@ function AmbientController() {
         range: { min: 0, max: upperBoundaries[i] },
       });
 
-      if ($(animationSlider[i]).hasClass('animation-pulsing-color-change')) {
+      if ($(animationSlider[i]).hasClass('animation-color-change-slider')) {
         animationSlider[i].noUiSlider.on(
           'slide', this.setColorChangeAnimationAttributes);
       } else if ($(animationSlider[i]).hasClass(
@@ -231,7 +231,7 @@ function AmbientController() {
     var message = {
       action: 'setAnimation',
       name: 'colorChange',
-      speed: (colorChangeSlider[1].noUiSlider.get() / 100),
+      speed: parseInt(colorChangeSlider[0].noUiSlider.get()),
     };
 
     _this.apiRequest(message);

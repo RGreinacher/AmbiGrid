@@ -211,6 +211,7 @@ class LightAnimation(Thread):
             self.showMonoPixel = True
         elif attributes['name'] == 'colorChange':
             self.showColorChange = True
+            self.colorChangeAnimation.setAttributes(attributes)
         elif attributes['name'] == 'pulsingCircle':
             self.showPulsingCircle = True
             self.pulsingCircleAnimation.setAttributes(attributes)

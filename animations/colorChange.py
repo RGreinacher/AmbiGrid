@@ -4,10 +4,11 @@
 # import project libs
 from colorCalculator import ColorCalculator
 from colorController import ColorController
+from issetHelper import IssetHelper
 
 
 
-class ColorChange:
+class ColorChange(IssetHelper):
 
     def __init__(self, device):
         # initializations
