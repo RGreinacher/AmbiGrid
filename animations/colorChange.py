@@ -22,18 +22,15 @@ class ColorChange(IssetHelper):
         self.speed = 10
 
     def start(self):
-        self.hueAdditionPerFrame = 1 / (1010 - (10 * self.speed))
+        self.hueAdditionPerFrame = 0.00001 * (self.speed + 1)
 
     def renderNextFrame(self):
         (currentHue, saturation, lightness) = self.colors.getBasisColorAsHsl()
-        self.currentHueAddition = self.colorCalculator.correctHueValue(
-            self.currentHueAddition + self.hueAdditionPerFrame)
-
         targetHue = self.colorCalculator.correctHueValue(
-            currentHue + self.currentHueAddition)
+            currentHue + self.hueAdditionPerFrame)
 
-        (r, g, b) = self.colorCalculator.convertHslToRgb(
-            targetHue, saturation, lightness)
+        self.colors.setBasisColorAsHsl(targetHue, saturation, lightness)
+        (r, g, b) = self.colors.getBasisColorAsRgb()
         self.device.setRgbToBuffer(r, g, b)
 
     # ***** getter **********************************
