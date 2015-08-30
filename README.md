@@ -4,9 +4,7 @@ Python3 framework for an Arduino controlled, programmable RGB LED mood light wit
 
 ## The quick look - why, how & what:
 
-I made this YouTube video for you to get an idea of what this source code can do.
-
-[YouTube video](http://www.youtube.com)
+I made this [YouTube video](http://youtu.be/1-XzrTyacT4) for you to get an idea of what this source code can do.
 
 Basically it provides a Web Socket interface and different animations for a RGB LED matrix which is connected to the server running this software via USB (in my setup this is a Raspberry PI 2 connected to a Adruino which controlls the LEDs).
 
